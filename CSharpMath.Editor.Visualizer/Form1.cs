@@ -8,6 +8,7 @@ namespace CSharpMath.Editor.Visualizer {
   public partial class Form1 : Form {
     private List<MathKeyboardInput> inputList = new();
     private LatexMathKeyboard latexMathKeyboard = new();
+    private Func<String> GetText = () => "";
     public Form1() {
       InitializeComponent();
     }
@@ -25,6 +26,8 @@ namespace CSharpMath.Editor.Visualizer {
         CommandList.Items.Add(t.ToString());
         inputList.Add(t);
       }
+      GetText = () => latexMathKeyboard.LaTeX;
+
     }
 
     private void AddCommand_Click(object sender, EventArgs e) {
@@ -64,7 +67,7 @@ namespace CSharpMath.Editor.Visualizer {
         }
 
       }
-      LatexLable.Text = latexMathKeyboard.LaTeX;
+      LatexLable.Text = GetText();
     }
 
     private void clearButtons() {
@@ -105,7 +108,7 @@ namespace CSharpMath.Editor.Visualizer {
       var atom = latexMathKeyboard.MathList.AtomAt(index());
       Button newButton = new Button();
       this.Controls.Add(newButton);
-      newButton.Text = atom?.TypeName + " / " + latexMathKeyboard.LaTeX+ " / " + index().SubIndexType.ToString() + " / " + index().ToString();
+      newButton.Text = atom?.TypeName + " / " + latexMathKeyboard.LaTeX + " / " + index().SubIndexType.ToString() + " / " + index().ToString();
       lastbutton = new Point(lastbutton.X + 200, lastbutton.Y);
       if (lastbutton.X > Form1.ActiveForm.Size.Width - 80) {
         lastbutton.X = button1.Location.X + 200;
@@ -119,7 +122,7 @@ namespace CSharpMath.Editor.Visualizer {
     private void DebugButton_Click(object sender, EventArgs e) {
       latexMathKeyboard.Clear();
       latexMathKeyboard.KeyPress(inputList.ToArray());
-      LatexLable.Text = latexMathKeyboard.LaTeX;
+      LatexLable.Text = GetText();
     }
 
 
@@ -161,6 +164,14 @@ namespace CSharpMath.Editor.Visualizer {
     private void checkBox2_CheckedChanged(object sender, EventArgs e) {
       if (checkBox2.Checked) {
         checkBox1.Checked = false;
+      }
+    }
+
+    private void MouseCheckBox_CheckedChanged(object sender, EventArgs e) {
+      if (this.MouseCheckBox.Checked) {
+        GetText = latexMathKeyboard._LatexWithCert;
+      } else {
+        GetText = () => latexMathKeyboard.LaTeX;
       }
     }
   }
