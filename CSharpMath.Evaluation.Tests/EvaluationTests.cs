@@ -17,10 +17,10 @@ namespace CSharpMath.EvaluationTests {
         Assert.NotNull(math);
         Assert.Equal(Evaluation.ConvertToMathString(converted)!.ToEntity().Simplify(), math.Simplify());
 
-        
+
         // Ensure that the converted entity is valid by simplifying it
-    //    if (result != null)
-         // Assert.Equal(result, math.Simplify().Stringize());
+        //    if (result != null)
+        // Assert.Equal(result, math.Simplify().Stringize());
       }
       Test(input);
       // This regex balances (, [ and \{ with ), ] and \} into one group, then inserts \left and \right
@@ -500,5 +500,12 @@ namespace CSharpMath.EvaluationTests {
     [InlineData(@"a^6+2a^6 % should be 3a^6", @"a^6+2 a^6", @"3 a^6")]
     [InlineData(@"4+\ \mkern1.5mu3", @"4+3", "7")]
     public void SkipInvisible(string latex, string converted, string output) => Test(latex, converted, output);
+    [Theory]
+    [InlineData("\\sqrt{2}", "\\sqrt{2}", "\\sqrt{2}")]
+    //[InlineData(@"sqrt2^2", @"left( \sqrt{2}\right) ^2", "2")]
+    //[InlineData(@"\sqrt[3]2", @"2^{\frac{1}{3}}", @"\sqrt[3]{2}")]
+    //[InlineData(@"\sqrt[3/2]2", @"2^{\frac{1}{\frac{3}{2}}}", @"\sqrt[3]{2}^2")]
+    public void BugTest(string latex, string converted, string output) => Test(latex, converted, output);
+
   }
 }

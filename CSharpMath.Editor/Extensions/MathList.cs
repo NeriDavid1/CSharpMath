@@ -145,9 +145,14 @@ namespace CSharpMath.Editor {
           if (frac is Atoms.Fraction && self.AtomListAt(index)?.CountObjects == 2) {
             if (index.LevelDown() is MathListIndex leveldown) {
               RemoveAt(self, ref leveldown);
+              index = index.LevelDown() ?? throw new Exception("null");
+              return;
             }
           }
+          else {
+
           self.AtomListAt(index)?.Clear();
+          }
           if (index.SubIndexType == MathListSubIndexType.BetweenBaseAndScripts) {
             index = index.LevelDown() ?? index.Previous ?? index;
             return;
