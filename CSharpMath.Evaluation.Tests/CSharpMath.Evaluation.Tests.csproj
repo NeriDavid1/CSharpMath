@@ -4,5 +4,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="../CSharpMath.Evaluation/CSharpMath.Evaluation.csproj" />
+    <ProjectReference Include="..\CSharpMath.Editor\CSharpMath.Editor.csproj" />
   </ItemGroup>
 </Project>
