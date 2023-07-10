@@ -435,10 +435,35 @@ namespace CSharpMath.Editor {
         // delete the last atom from the list
         if (HasText) {
           if (_insertionIndex.Previous is MathListIndex previous) {
+            if (ShouldMoveLeft(previous)) {
+              MoveCursor(Diraction.Left);
+              return;
+            }
             _insertionIndex = previous;
             MathList.RemoveAt(ref _insertionIndex);
           }
         }
+        // check if the last atom is an atom with script that shouldn't be deleted
+        bool ShouldMoveLeft(MathListIndex previous) {
+          if (LastAtomHasScript(previous)) {
+            if (AtomIsInTheScript(previous)) {
+              return true;
+            }
+          }
+          return false;
+          bool AtomIsInTheScript(MathListIndex previous) {
+            var lastAtom = getAtom(previous);
+            if (lastAtom is Atoms.Placeholder) return false;
+            return !(previous.SubIndexType is MathListSubIndexType.Subscript or MathListSubIndexType.Superscript);
+
+          }
+          bool LastAtomHasScript(MathListIndex previous) {
+            var lastAtom = getAtom(previous);
+            if (lastAtom is null) return false;
+            return lastAtom.HasScripts;
+      }
+        }
+
       }
       void InsertAtom(MathAtom atom) {
         // insert atom by his script/radical

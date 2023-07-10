@@ -395,9 +395,16 @@ namespace CSharpMath.Editor.Tests {
 
   ]
     public void PlaceHolderFix(string latex, params K[] inputs) => Test(latex, inputs);
-    [Fact]
-    public void SplitByatom()
-    {
+        [
+  Theory,
+  T(@"2", K.D2, K.Power,K.Right, K.Backspace,K.Backspace),
+  T(@"2^2", K.D2, K.Power, K.D2, K.Right, K.Backspace),
+  T(@"2", K.D2, K.Power, K.D2, K.Right, K.Right, K.Backspace, K.Backspace,K.Backspace),
+
+  ]
+    public void ScriptBackWards(string latex, params K[] inputs) => Test(latex, inputs);
+
+    public void SplitByatom() {
       var keyboard = new LatexMathKeyboard();
       keyboard.KeyPress(K.D1, K.D2, K.D3, K.D4, K.Equals, K.D5, K.D6, K.D7, K.Equals, K.Power, K.D5, K.Right, K.Equals, K.D9);
       var Equal = LaTeXSettings.AtomForCommand(new string('=', 1));
