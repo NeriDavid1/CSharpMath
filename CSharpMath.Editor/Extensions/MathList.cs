@@ -126,9 +126,9 @@ namespace CSharpMath.Editor {
       }
 
       static void ensureSubAndScript(MathListIndex index, MathAtom atom, MathAtom currentAtom) {
-        if (currentAtom.Subscript.IsEmpty() && currentAtom.Superscript.IsEmpty())
+        if (!currentAtom.HasScripts)
           throw new SubIndexTypeMismatchException(index);
-        if (atom.Subscript.IsNonEmpty() || atom.Superscript.IsNonEmpty())
+        if (atom.HasScripts)
           throw new ArgumentException("Cannot fuse with an atom that already has a subscript or a superscript");
       }
     }
