@@ -8,6 +8,7 @@ namespace CSharpMath.Editor {
   using CSharpMath.Atom.Atoms;
   using Structures;
   partial class Extensions {
+    // this method is used to insert an atom into a mathlist and advance the index to the next position
     static void InsertAtAtomIndexAndAdvance(this MathList self, int atomIndex, MathAtom atom, ref MathListIndex advance, MathListSubIndexType advanceType) {
       static void CheckOutOfBounds(MathList self, int atomIndex) {
         if (atomIndex < 0 || atomIndex > self.Count)
@@ -27,43 +28,54 @@ namespace CSharpMath.Editor {
         return false;
         bool placeholderisClose(Placeholder pl) {
           if (advance.AtomIndex <= 1) {
-            if (advance.SubIndexType != MathListSubIndexType.None) {
-              return true;
-            }
-            if (SubAndSuperAreEmpty(pl)) {
+            if (!pl.HasScripts) {
               return true;
             }
           }
           return false;
         }
       }
+      static MathListIndex MoveNextIfPlaceHolder(MathList self, MathListIndex advance) {
+        var NewList = self.AtomListAt(advance);
+        if (NewList != self) {
+          // set next if placeholder
+          if (NewList?.Count > 0 && NewList[0] is Placeholder) {
+            advance = advance.Next;
+          }
+        }
+
+        return advance;
+      }
       CheckOutOfBounds(self, atomIndex);
 
       if (priviousIsPlaceHolder(self, atomIndex, out MathAtom placeholder, advance)) {
+        // switch placeholder to atom
         SetSuperAndSubScript(placeholder, atom);
         self[atomIndex - 1] = atom;
         if (advanceType == MathListSubIndexType.None) {
           return;
         }
-        else if(advance.Previous is MathListIndex pre)
-        advance = pre;
+        else if (advance.Previous is MathListIndex pre)
+          advance = pre;
       } else {
         self.Insert(atomIndex, atom);
       }
+      if (atom is Placeholder && advanceType == MathListSubIndexType.None) {
+        if (atom.HasScripts) {
+          advance = advance.LevelUpWithSubIndex(MathListSubIndexType.None, MathListIndex.Level0Index(1));
+          advance = advance.Next;
+          return;
+        }
+      }
       if (advanceType == MathListSubIndexType.None) {
-        advance = advance.Next; 
-        var newwlist = self.AtomListAt(advance);
+        advance = advance.Next;
         return;
       }
       advance = advance.LevelUpWithSubIndex(advanceType, MathListIndex.Level0Index(0));
-      var NewList = self.AtomListAt(advance);
-      // check if is in the script
-      if (NewList != self) {
-        // set next if placeholder
-        if (NewList?.Count > 0 && NewList[0] is Placeholder) {
-          advance = advance.Next;
-        }
-      }
+
+      advance = MoveNextIfPlaceHolder(self, advance);
+
+
     }
     /// <summary>Inserts <paramref name="atom"/> and modifies <paramref name="index"/> to advance to the next position.</summary>
     public static void InsertAndAdvance(this MathList self, ref MathListIndex index, MathAtom atom, MathListSubIndexType advanceType) {
@@ -151,7 +163,7 @@ namespace CSharpMath.Editor {
           }
           else {
 
-          self.AtomListAt(index)?.Clear();
+            self.AtomListAt(index)?.Clear();
           }
           if (index.SubIndexType == MathListSubIndexType.BetweenBaseAndScripts) {
             index = index.LevelDown() ?? index.Previous ?? index;
@@ -192,7 +204,7 @@ namespace CSharpMath.Editor {
           self.RemoveAt(index.AtomIndex);
           //self.Insert(index.AtomIndex,insertionAtom);
           if (currectAtom.Subscript.IsNonEmpty() && currectAtom.Superscript.IsNonEmpty()) {
-          self.Insert(index.AtomIndex,insertionAtom);
+            self.Insert(index.AtomIndex,insertionAtom);
             return;
           }
           index = downIndex;
