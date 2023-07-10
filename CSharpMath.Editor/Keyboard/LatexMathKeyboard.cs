@@ -389,7 +389,7 @@ namespace CSharpMath.Editor {
                     case MathListSubIndexType.Radicand:
                     case MathListSubIndexType.Denominator:
                     case MathListSubIndexType.Inner:
-                      if (HasSuperOrSub(levelDownAtom))
+                      if (levelDownAtom.HasScripts)
                         IndexLevelDownUp(MathListSubIndexType.BetweenBaseAndScripts, MathListIndex.Level0Index(1));
                       else
                         goto default;

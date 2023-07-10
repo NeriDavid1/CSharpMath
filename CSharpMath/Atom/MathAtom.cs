@@ -107,6 +107,6 @@ namespace CSharpMath.Atom {
 
     public List<AtomCover>? Cover { get; set; }
     public bool HasCover => AtomCover.IsNonNullOrEmpty(Cover);
-
+    public bool HasScripts => Superscript.IsNonEmpty() || Subscript.IsNonEmpty();
   }
 }

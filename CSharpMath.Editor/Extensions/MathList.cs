@@ -160,7 +160,7 @@ namespace CSharpMath.Editor {
           index = index.LevelDown()?.Next ?? index.Previous ?? index;
           return;
         }
-        if (!SubAndSuperAreEmpty(currectAtom) || self.Count > 1) {
+        if (currectAtom.HasScripts || self.Count > 1) {
           self.RemoveAt(index.AtomIndex);
         }
         return;
@@ -248,7 +248,7 @@ namespace CSharpMath.Editor {
         if (index is null) throw new NullReferenceException("index");
         if (index.AtomIndex > 0) {
           previous = self.Atoms[index.AtomIndex - 1];
-          if (SubAndSuperAreEmpty(previous) && filterAtoms(previous)) {
+          if (!(previous.HasScripts) && filterAtoms(previous)) {
             return true;
           }
         }
@@ -269,7 +269,7 @@ namespace CSharpMath.Editor {
           throw new IndexOutOfRangeException($"Index {index.AtomIndex} is out of bounds for list of size {self.Atoms.Count}");
       }
       static void CheckForSubSuperEmpty(MathListIndex index, MathAtom currentAtom) {
-        if (currentAtom.Subscript.IsEmpty() && currentAtom.Superscript.IsEmpty())
+        if (!currentAtom.HasScripts)
           throw new SubIndexTypeMismatchException(index);
       }
     }
@@ -484,9 +484,6 @@ namespace CSharpMath.Editor {
     private static void SetSuperAndSubScript(MathAtom currentAtom, MathAtom ToAtom) {
       ToAtom.Superscript.Append(currentAtom.Superscript);
       ToAtom.Subscript.Append(currentAtom.Subscript);
-    }
-    private static bool SubAndSuperAreEmpty(MathAtom Atom) {
-      return Atom.Subscript.IsEmpty() && Atom.Superscript.IsEmpty();
     }
   }
 }
