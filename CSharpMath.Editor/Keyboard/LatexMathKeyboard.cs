@@ -356,7 +356,7 @@ namespace CSharpMath.Editor {
                 var Type = rad.Degree.IsNonEmpty() ? MathListSubIndexType.Degree : MathListSubIndexType.Radicand;
                 IndexLevelUp(Type, MathListIndex.Level0Index(0));
                 break;
-              case var a when a.Superscript.IsNonEmpty() || a.Subscript.IsNonEmpty():
+              case var a when a.HasScripts:
                 IndexLevelUp(MathListSubIndexType.BetweenBaseAndScripts, MathListIndex.Level0Index(1));
                 break;
               case Atoms.Placeholder:
@@ -412,11 +412,8 @@ namespace CSharpMath.Editor {
                       break;
                   }
                 }
-                static bool HasSuperOrSub(MathAtom levelDownAtom) {
-                  return levelDownAtom.Superscript.IsNonEmpty() || levelDownAtom.Subscript.IsNonEmpty();
                 }
             }
-          }
           void InsertionNullCheck() {
             if (_insertionIndex is null)
               throw new InvalidOperationException($"{nameof(_insertionIndex)} is null.");
