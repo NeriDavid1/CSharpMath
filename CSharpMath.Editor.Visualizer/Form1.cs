@@ -180,14 +180,14 @@ namespace CSharpMath.Editor.Visualizer {
     }
 
     private String GetAsKeyTest() {
-      string Addon = "Keys.";
+      string Addon = "K.";
       StringBuilder stringBuilder = new StringBuilder();
       foreach (var item in inputList) {
         stringBuilder.Append(Addon);
         stringBuilder.Append(item.ToString());
-        stringBuilder.Append(@",");
+        stringBuilder.Append(@", ");
       }
-      stringBuilder.Remove(stringBuilder.Length - 1, 1);
+      stringBuilder.Remove(stringBuilder.Length - 2, 2);
       return stringBuilder.ToString();
     }
 
