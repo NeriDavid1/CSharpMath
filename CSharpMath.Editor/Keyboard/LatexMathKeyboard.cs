@@ -756,13 +756,13 @@ namespace CSharpMath.Editor {
     /// <param name="ToLeft"></param>
     /// <param name="BackToFirstPos"></param>
     /// <returns></returns>
-    public MathListIndex? SerachFor(Func<MathNavigation, bool> Condition,
+    public MathNavigation? SerachFor(Func<MathNavigation, bool> Condition,
       out int CountMovement, bool ToLeft = true, bool BackToFirstPos = true) {
 
-      var CopyIndex = InsertionIndex;
+      var MathNavigationCopy = navigation;
 
       var isFirst = () => navigation.FirstAtomInAllLists;
-      var isLast = () => navigation.IsLastList && navigation.IsLastIndex;
+      var isLast = () => navigation.IsTheOnlyList && navigation.IsLastIndex;
 
       Action Movement = ToLeft ? () => KeyPress(MathKeyboardInput.Left) : () => KeyPress(MathKeyboardInput.Right);
       Func<bool> OnTheEdge = ToLeft ? isFirst : isLast;
@@ -778,22 +778,22 @@ namespace CSharpMath.Editor {
         CountMovement++;
       }
 
-      var resultIndex = InsertionIndex;
+      var resultIndex = navigation;
 
       if (BackToFirstPos)
-        InsertionIndex = CopyIndex;
+        navigation = MathNavigationCopy;
 
       return resultIndex;
 
 
 
     }
-    public void ChangeMathlistByAtom(MathList mathlist, MathAtom atom, bool setIndexAfterAtom = false) {
+    public void ChangeMathlistByAtom(MathList mathlist, MathAtom atom, bool setIndexBeforeAtom = false) {
       MathList = mathlist;
       navigation = new MathNavigation(MathList);
-      ChangeInsertionIndexByAtom(atom, setIndexAfterAtom);
+      ChangeInsertionIndexByAtom(atom, setIndexBeforeAtom);
     }
-    public void ChangeInsertionIndexByAtom(MathAtom atom, bool setIndexAfterAtom = false) {
+    public void ChangeInsertionIndexByAtom(MathAtom atom, bool setIndexBeforeAtom = false) {
 
       var refernceEqual = (MathNavigation i) => {
         var currectAtom = navigation.GetCurrentAtom;
@@ -809,8 +809,8 @@ namespace CSharpMath.Editor {
         SerachFor(refernceEqual, out _, false, false);
       }
 
-      if (setIndexAfterAtom)
-        KeyPress(MathKeyboardInput.Right);
+      if (setIndexBeforeAtom)
+        KeyPress(MathKeyboardInput.Left);
 
     }
     public void ChangeMathList(MathList mathlist) {
