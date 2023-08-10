@@ -401,12 +401,17 @@ Theory,
 T(@"2", K.D2, K.Power, K.Right, K.Backspace, K.Backspace),
 T(@"2^2", K.D2, K.Power, K.D2, K.Right, K.Backspace),
 T(@"2", K.D2, K.Power, K.D2, K.Right, K.Right, K.Backspace, K.Backspace, K.Backspace),
-T(@"4^6", K.Power, K.D6, K.Left, K.Left, K.D7, K.D8, K.Backspace, K.Backspace,K.D4),
+T(@"4^6", K.Power, K.D6, K.Left, K.Left, K.D7, K.D8, K.Backspace, K.Backspace, K.D4),
 
 
 ]
     public void ScriptBackWards(string latex, params K[] inputs) => Test(latex, inputs);
-
+    [
+Theory,
+T(@"5", K.D5, K.Slash, K.D7, K.Backspace, K.Backspace),
+T(@"3", K.D3, K.Slash, K.D2, K.D0 ,K.Backspace, K.Backspace,K.Backspace),
+]
+    public void BackSpaceDenominator(string latex, params K[] inputs) => Test(latex, inputs);
     public void SplitByatom() {
       var keyboard = new LatexMathKeyboard();
       keyboard.KeyPress(K.D1, K.D2, K.D3, K.D4, K.Equals, K.D5, K.D6, K.D7, K.Equals, K.Power, K.D5, K.Right, K.Equals, K.D9);

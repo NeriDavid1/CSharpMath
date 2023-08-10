@@ -171,7 +171,7 @@ namespace CSharpMath.Editor {
             foreach (var atom in frac.Numerator.Atoms) {
               atoms.Enqueue(atom);
             }
-            list.MoveDown();
+            RemoveContainer(ref list);
             while (atoms.Count != 0) {
               var currectmathlist = list.GetCurrentList;
               currectmathlist.InsertNav(atoms.Dequeue(), ref list);
