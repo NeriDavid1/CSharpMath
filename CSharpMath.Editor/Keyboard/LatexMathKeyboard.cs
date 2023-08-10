@@ -6,10 +6,14 @@ namespace CSharpMath.Editor {
   using System;
   using System.Collections.Generic;
   using Atom;
+  using CSharpMath.Atom.Atoms;
   using Structures;
   using Atoms = Atom.Atoms;
 
   public class LatexMathKeyboard {
+    public LatexMathKeyboard() {
+      navigation = new MathNavigation(MathList);
+    }
     private enum Diraction : byte {
       Up,
       Down,
@@ -26,6 +30,9 @@ namespace CSharpMath.Editor {
       return LatexHandle;
     }
 
+    public MathNavigation navigation;
+
+    // unnessery since we have navigation but to not break the code we will keep it for now
     internal MathListIndex _insertionIndex = MathListIndex.Level0Index(0);
     public MathListIndex InsertionIndex {
       get => _insertionIndex;
@@ -40,27 +47,17 @@ namespace CSharpMath.Editor {
     }
     public virtual void KeyPress(MathKeyboardInput input) {
       ConvertClick(input);
-
-      void HandleScriptButton(bool isSuperScript) {
-        // check what kind of script
-        var subIndexType = isSuperScript ? MathListSubIndexType.Superscript : MathListSubIndexType.Subscript;
+      void HandleScriptButtonNew(bool isSuperScript) {
         // if the script is empty add empty atom and move to the right list
-        if (!IndexHasPrevious()) {
+        if (!ThreisPreviousAtom()) {
           CreateEmptyAtom();
           return;
         }
-
-        // back to previous
-        var isBetweenBaseAndScripts =
-         finalSubType() is MathListSubIndexType.BetweenBaseAndScripts;
-        var prevIndexCorrected = isBetweenBaseAndScripts ? _insertionIndex.LevelDown()
-            ?? throw new InvalidCodePathException("BetweenBaseAndScripts indexInCurrectList has null LevelDown")
-          : _insertionIndex.Previous;
-        // check if the atom is non number who required a place holder
-        var prevAtom = getAtom(prevIndexCorrected);
+        var prevAtom = navigation.GetCurrentAtom;
         if (prevAtom is null)
           throw new InvalidCodePathException("prevAtom is null");
-        if (!isBetweenBaseAndScripts && IsFullPlaceholderRequired(prevAtom)) {
+        // check if the atom is non number who required a place holder
+        if (IsFullPlaceholderRequired(prevAtom)) {
           CreateEmptyAtom();
           return;
         }
@@ -68,24 +65,25 @@ namespace CSharpMath.Editor {
         var script = GetScript(prevAtom);
         if (script.IsEmpty()) {
           SetScript(prevAtom, LaTeXSettings.PlaceholderList);
+          navigation.MoveUp();
+          // move to the script that we added right now
+          if (navigation.GetCurrentList != script) {
+            navigation.MoveToScript(script);
+          }
+          navigation.Next();
+          return;
         }
-        // update the insertion to the right place
-        _insertionIndex = prevIndexCorrected!.LevelUpWithSubIndex
-          (subIndexType, MathListIndex.Level0Index(1));
-        // ensure that the index in the right place
-        if (InsertionIndex.FinalIndex == 2) {
-          _insertionIndex = _insertionIndex.Previous ?? _insertionIndex;
-        }
-
-
-        bool IndexHasPrevious() { return (_insertionIndex.Previous is MathListIndex); }
+        navigation.MoveUp();
+        bool ThreisPreviousAtom() { return (navigation.GetCurrentAtom != null); }
         MathList GetScript(MathAtom atom) => isSuperScript ? atom.Superscript : atom.Subscript;
         void SetScript(MathAtom atom, MathList value) => GetScript(atom).Append(value);
         void CreateEmptyAtom() {
-          // Create an empty atom and move the insertion indexInCurrectList up.
+          // Create an empty atom and move to the next atom because its a placeholder
           var emptyAtom = LaTeXSettings.Placeholder;
           SetScript(emptyAtom, LaTeXSettings.PlaceholderList);
-          MathList.InsertAndAdvance(ref _insertionIndex, emptyAtom, subIndexType);
+          MathList.InsertNav(emptyAtom, ref navigation);
+          navigation.MoveUp();
+          navigation.Next();
         }
         static bool IsFullPlaceholderRequired(MathAtom mathAtom) =>
           mathAtom switch {
@@ -97,15 +95,14 @@ namespace CSharpMath.Editor {
             _ => false
           };
       }
-      void HandleSlashButton() {
-        // special / handling - makes the thing atom fraction
+      void HandleSlashButtonNew() {
+        // slash buttom is used to create fraction which taking all the previous atoms and put them in the numerator
+        // for example if we have 1+2 and we press / we will get 1+2/square and another example is 123 and we press / we will get 123/square
         var numerator = new Stack<MathAtom>();
         var parenDepth = 0;
-        if (finalSubType() == MathListSubIndexType.BetweenBaseAndScripts)
-          _insertionIndex = _insertionIndex.LevelDown()?.Next
-              ?? throw new InvalidCodePathException("_insertionIndex.LevelDown() returned null");
-        for (; _insertionIndex.Previous is not null; _insertionIndex = _insertionIndex.Previous) {
-          switch (getAtom(_insertionIndex.Previous), parenDepth) {
+
+        for (; navigation.GetCurrentAtom is not null; navigation.Previous()) {
+          switch (navigation.GetCurrentAtom, parenDepth) {
             case (null, _): throw new InvalidCodePathException("Invalid _insertionIndex");
             // Stop looking behind upon encountering these atoms unparenthesized
             case (Atoms.Open _, _) when --parenDepth < 0: goto stop;
@@ -120,388 +117,220 @@ namespace CSharpMath.Editor {
             case (var atom, _): numerator.Push(atom); break;
           }
         }
-      stop: MathList.RemoveAtoms(new MathListRange(_insertionIndex, numerator.Count));
-        if (numerator.Count == 0)
+      stop: navigation.GetCurrentList.RemoveAtoms(navigation.Index + 1, numerator.Count);
+        if (numerator.Count == 0) {
+          numerator.Push(new Atoms.Number("1")); ;
           // so we didn't really find any numbers before this, so make the numerator 1
-          numerator.Push(new Atoms.Number("1"));
-        if (getAtom(_insertionIndex.Previous) is Atoms.Fraction)
-          // Add atom times symbol
-          MathList.InsertAndAdvance(ref _insertionIndex, LaTeXSettings.Times, MathListSubIndexType.None);
-        MathList.InsertAndAdvance(ref _insertionIndex, new Atoms.Fraction(
+        }
+        // if the previous atom is a fraction we will add a symbole of times between them
+        if (navigation.GetCurrentAtom is Atoms.Fraction f) {
+          MathList.InsertNav(LaTeXSettings.Times, ref navigation);
+        }
+        // add the fraction
+        MathList.InsertNav(new Atoms.Fraction(
           new MathList(numerator),
           LaTeXSettings.PlaceholderList
-        ), MathListSubIndexType.Denominator);
+        ), ref navigation);
+        // move to the denominator
+        navigation.NextList();
+        navigation.Next();
       }
       void InsertInner(string left, string right) =>
-        MathList.InsertAndAdvance(ref _insertionIndex,
-          new Atoms.Inner(new Boundary(left), LaTeXSettings.PlaceholderList, new Boundary(right)),
-          MathListSubIndexType.Inner);
+        MathList.InsertNav(
+          new Atoms.Inner(new Boundary(left), LaTeXSettings.PlaceholderList, new Boundary(right)), ref navigation);
       void MoveCursor(Diraction diraction) {
         switch (diraction) {
           case Diraction.Down:
-            // move down
+            // todo
             break;
           case Diraction.Up:
-            MoveCursorUp();
+            // todo
             break;
           case Diraction.Left:
-            MoveCursorLeft();
+            MoveCursorLeftNew();
             break;
           case Diraction.Right:
-            MoveCursorRight();
+            MoveCursorRightNew();
             break;
         }
-        void MoveCursorUp() {
-          var searchType = InsertionIndex?.GetParentIndexByType(MathListSubIndexType.Denominator,
-          MathListSubIndexType.Subscript);
-
-          if (searchType is null) return;
-
-          var ParentAtom = MathList?.AtomAt(searchType) ?? MathList?.AtomAt(searchType?.Previous);
-
-          double indexInCurrectList = 0, currectListCounter = 0, upperListCounter = 0;
-
-          MathList requestedList;
-          var lookForType = MathListSubIndexType.None;
-          if (ParentAtom is Atoms.Fraction frac) {
-            lookForType = MathListSubIndexType.Numerator;
-            requestedList = frac.Numerator;
-            currectListCounter = frac.Denominator.CountObjects - 1;
-            upperListCounter = frac.Numerator.CountObjects - 1;
-          } else if (ParentAtom is MathAtom atom) {
-            lookForType = MathListSubIndexType.Superscript;
-            requestedList = atom.Superscript;
-            currectListCounter = atom.Subscript.CountObjects - 1;
-            upperListCounter = atom.Superscript.CountObjects - 1;
-          } else {
-            throw new NullReferenceException("atomisnull");
+        void MoveCursorLeftNew() {
+          if (MoveByPlaceHolder()) {
+          // exmple //frac{square|}{2323} >> //frac{|square}{2323} since you cannot add atom before the placeholder
+            navigation.Previous();
           }
-
-          Func<MathListIndex, bool> condition = (InsertionIndex) => {
-            if (InsertionIndex.FinalSubIndexType == lookForType)
-              if (MathList?.AtomListAt(InsertionIndex)?.EqualsList(requestedList) ?? false)
-                return true;
-            return false;
-          };
-
-          var nextMathList = SerachFor(condition, out int Index);
-
-          MoveExecution();
-          void MoveExecution() {
-
-            double MaxMovement = indexInCurrectList + upperListCounter + 1;
-            double minMovement = indexInCurrectList + 1;
-
-            double ListsDifference = (upperListCounter - currectListCounter) / 2;
-
-            double MoveLeftListReletive = currectListCounter - indexInCurrectList;
-
-            MoveLeftListReletive = MoveLeftListReletive + ListsDifference;
-
-            double MoveLeftCounter = 0;
-
-            MoveLeftCounter += indexInCurrectList + MoveLeftListReletive;
-
-            MoveLeftCounter = Math.Min(Math.Max(MoveLeftCounter, minMovement), MaxMovement);
-
-            while (MoveLeftCounter-- >= 1) {
-              MoveCursorLeft();
-            }
-
-          }
-
-        }
-        void MoveCursorLeft() {
-          var prev = _insertionIndex.Previous;
-          var previousAtom = getAtom(prev);
-#pragma warning disable CS8604 // Possible null reference argument.
-          switch (previousAtom) {
-            case var _ when prev is null:
-            case null: // At beginning of line
-              // move by level down findel type
-              var levelDown = _insertionIndex.LevelDown();
-              var FinalType = finalSubType();
-              MoveByFinalType(levelDown, FinalType);
-              break;
-            case Atoms.Placeholder p:
-              _insertionIndex = prev;
-              if ((p.Superscript.IsEmpty() && p.Subscript.IsEmpty()) || _insertionIndex.SubIndexType == MathListSubIndexType.BetweenBaseAndScripts) {
-                MoveCursorLeft();
+          if (navigation.IsFirstIndex) {
+            if (navigation.IsFirstList) {
+              if (navigation.FirstAtomInAllLists) {
                 return;
               }
-              break;
-            case { Superscript: var s } when s.IsNonEmpty():
-              // היה צריך להחזיר null
-              _insertionIndex = prev;
-              IndexLevelUp(MathListSubIndexType.Superscript, MathListIndex.Level0Index(s.Count));
-              break;
-            case { Subscript: var s } when s.IsNonEmpty():
-              _insertionIndex = prev.LevelUpWithSubIndex
-                (MathListSubIndexType.Subscript, MathListIndex.Level0Index(s.Count));
-              break;
-            case Atoms.Inner { InnerList: var l }:
-              _insertionIndex = prev;
-              IndexLevelUp(MathListSubIndexType.Inner, MathListIndex.Level0Index(l.Count));
-              break;
-            case Atoms.Radical { Radicand: var r }:
-              _insertionIndex = prev;
-              IndexLevelUp(MathListSubIndexType.Radicand, MathListIndex.Level0Index(r.Count));
-              break;
-            case Atoms.Fraction { Denominator: var d }:
-              _insertionIndex = prev;
-              IndexLevelUp(MathListSubIndexType.Denominator, MathListIndex.Level0Index(d.Count));
-              break;
-            default:
-              _insertionIndex = prev;
-              break;
-          }
-#pragma warning restore CS8604 // Possible null reference argument.
-          CheckNullIndex();
-          var NextIndex = _insertionIndex?.Next;
-          if (NextIndex is not null) {
-            if (getAtom(NextIndex) is Atoms.Placeholder p && p.Superscript.IsEmpty() && p.Subscript.IsEmpty())
-              _insertionIndex = NextIndex; // Skip right side of placeholders when end of line
-          }
-
-          void MoveByFinalType(MathListIndex? levelDown, MathListSubIndexType FinalType) {
-            switch (FinalType) {
-              case MathListSubIndexType.None:
-                goto default;
-              case var _ when levelDown is null:
-                throw new InvalidCodePathException("Null levelDown despite non-None FinalSubIndexType");
-              case MathListSubIndexType.Superscript:
-                var scriptAtom = getAtom(levelDown);
-                if (scriptAtom is null)
-                  throw new InvalidCodePathException("Invalid levelDown");
-                if (scriptAtom.Subscript.IsNonEmpty()) {
-                  IndexLevelDownUp(MathListSubIndexType.Subscript, MathListIndex.Level0Index(scriptAtom.Subscript.Count));
-                } else
-                  goto case MathListSubIndexType.Subscript;
-                break;
-              case MathListSubIndexType.Subscript:
-                IndexLevelDownUp(MathListSubIndexType.BetweenBaseAndScripts, MathListIndex.Level0Index(1));
-                break;
-              case MathListSubIndexType.BetweenBaseAndScripts:
-                if (getAtom(levelDown) is Atoms.Radical rad && rad.Radicand.IsNonEmpty()) {
-                  IndexLevelDownUp(MathListSubIndexType.Radicand, MathListIndex.Level0Index(rad.Radicand.Count));
-                } else if (getAtom(levelDown) is Atoms.Fraction frac && frac.Denominator.IsNonEmpty()) {
-                  IndexLevelDownUp(MathListSubIndexType.Denominator, MathListIndex.Level0Index(frac.Denominator.Count));
-                } else if (getAtom(levelDown) is Atoms.Inner inner && inner.InnerList.IsNonEmpty()) {
-                  IndexLevelDownUp(MathListSubIndexType.Inner, MathListIndex.Level0Index(inner.InnerList.Count));
-                }
-                  /// test
-                  else goto case MathListSubIndexType.Radicand;
-                break;
-              case MathListSubIndexType.Radicand:
-                if (getAtom(levelDown) is Atoms.Radical radDeg && radDeg.Degree.IsNonEmpty()) {
-                  IndexLevelDownUp(MathListSubIndexType.Degree, MathListIndex.Level0Index(radDeg.Degree.Count));
-                } else
-                  goto case MathListSubIndexType.Denominator;
-                break;
-              case MathListSubIndexType.Denominator:
-                if (getAtom(levelDown) is Atoms.Fraction fracNum && fracNum.Numerator.IsNonEmpty()) {
-                  IndexLevelDownUp(MathListSubIndexType.Numerator, MathListIndex.Level0Index(fracNum.Numerator.Count));
-                } else
-                  goto default;
-                break;
-              case MathListSubIndexType.Degree:
-              case MathListSubIndexType.Numerator:
-              case MathListSubIndexType.Inner:
-              default:
-                _insertionIndex = levelDown ?? _insertionIndex;
-                break;
-            }
-          }
-
-          void CheckNullIndex() {
-            if (_insertionIndex is null)
-              throw new InvalidOperationException($"{nameof(_insertionIndex)} is null.");
-          }
-        }
-        void MoveCursorRight() {
-
-          InsertionNullCheck();
-          MoveByAtom();
-          InsertionNullCheck();
-
-          MoveRightIfPlaceHolder();
-
-          void MoveByAtom() {
-            switch (getAtom(_insertionIndex)) {
-              case null: //After Count
-                // move by level down findel type
-                var levelDown = _insertionIndex.LevelDown();
-                var levelDownAtom = getAtom(levelDown);
-                searchOnLevelDown();
-                break;
-              case var a when finalSubType() is MathListSubIndexType.BetweenBaseAndScripts:
-                levelDown = _insertionIndex.LevelDown();
-                if (levelDown is null) {
-                  throw new InvalidCodePathException
-                    ("finalSubType() is BetweenBaseAndScripts but levelDown is null");
-                }
-
-                var typeOfAtom = a.Subscript.IsNonEmpty() ? MathListSubIndexType.Subscript : MathListSubIndexType.Superscript;
-
-                _insertionIndex = levelDown;
-                IndexLevelUp(typeOfAtom, MathListIndex.Level0Index(0));
-                break;
-              case Atoms.Inner _:
-                IndexLevelUp(MathListSubIndexType.Inner, MathListIndex.Level0Index(0));
-                break;
-              case Atoms.Fraction _:
-                IndexLevelUp(MathListSubIndexType.Numerator, MathListIndex.Level0Index(0));
-                break;
-              case Atoms.Radical rad:
-                var Type = rad.Degree.IsNonEmpty() ? MathListSubIndexType.Degree : MathListSubIndexType.Radicand;
-                IndexLevelUp(Type, MathListIndex.Level0Index(0));
-                break;
-              case var a when a.HasScripts:
-                IndexLevelUp(MathListSubIndexType.BetweenBaseAndScripts, MathListIndex.Level0Index(1));
-                break;
-              case Atoms.Placeholder:
-              //  // Skip right side of placeholders when end of line
-              //  goto case null;
-              default:
-                _insertionIndex = _insertionIndex.Next;
-                break;
-                void searchOnLevelDown() {
-                  var FinalType = finalSubType();
-                  switch (FinalType) {
-                    case MathListSubIndexType.None:
-                      goto default;
-                    case var _ when levelDown is null:
-                      throw new InvalidCodePathException("Null levelDown despite non-None FinalSubIndexType");
-                    case var _ when levelDownAtom is null:
-                      throw new InvalidCodePathException("Invalid levelDown");
-                    case MathListSubIndexType.Degree:
-                      if (levelDownAtom is Atoms.Radical)
-                        IndexLevelDownUp(MathListSubIndexType.Radicand, MathListIndex.Level0Index(0));
-                      else
-                        throw new SubIndexTypeMismatchException(typeof(Atoms.Radical), levelDown);
-                      break;
-                    case MathListSubIndexType.Numerator:
-                      if (levelDownAtom is Atoms.Fraction)
-                        IndexLevelDownUp(MathListSubIndexType.Denominator, MathListIndex.Level0Index(0));
-                      else
-                        throw new SubIndexTypeMismatchException(typeof(Atoms.Fraction), levelDown);
-                      break;
-                    case MathListSubIndexType.Radicand:
-                    case MathListSubIndexType.Denominator:
-                    case MathListSubIndexType.Inner:
-                      if (levelDownAtom.HasScripts)
-                        IndexLevelDownUp(MathListSubIndexType.BetweenBaseAndScripts, MathListIndex.Level0Index(1));
-                      else
-                        goto default;
-                      break;
-                    case MathListSubIndexType.BetweenBaseAndScripts:
-                      if (levelDownAtom.Subscript.IsNonEmpty())
-                        IndexLevelDownUp(MathListSubIndexType.Subscript, MathListIndex.Level0Index(0));
-                      else
-                        goto case MathListSubIndexType.Subscript;
-                      break;
-                    case MathListSubIndexType.Subscript:
-                      if (levelDownAtom.Superscript.IsNonEmpty())
-                        IndexLevelDownUp(MathListSubIndexType.Superscript, MathListIndex.Level0Index(0));
-                      else
-                        goto default;
-                      break;
-                    case MathListSubIndexType.Superscript:
-                    default:
-                      _insertionIndex = levelDown?.Next ?? _insertionIndex;
-                      break;
-                  }
-                }
-                }
-            }
-          void InsertionNullCheck() {
-            if (_insertionIndex is null)
-              throw new InvalidOperationException($"{nameof(_insertionIndex)} is null.");
-          }
-          void MoveRightIfPlaceHolder() {
-            if (getAtom(_insertionIndex) is Atoms.Placeholder)
-              MoveCursorRight();
-          }
-        }
-        void IndexLevelUp(MathListSubIndexType Type, MathListIndex subindex) {
-          _insertionIndex = _insertionIndex.LevelUpWithSubIndex(Type, subindex);
-        }
-        void IndexLevelDownUp(MathListSubIndexType Type, MathListIndex subindex) {
-          _insertionIndex = _insertionIndex.LevelDown() ?? _insertionIndex;
-          IndexLevelUp(Type, subindex);
-        }
-      }
-      void DeleteBackwards() {
-        // delete the last atom from the list
-        if (HasText) {
-          if (_insertionIndex.Previous is MathListIndex previous) {
-            if (ShouldMoveLeft(previous)) {
-              MoveCursor(Diraction.Left);
+              // go to parent list
+              navigation.MoveDown();
+              navigation.OnRightSide = false;
+              // if parent was a container go to the previous list
+              if (navigation.OnContainer) {
+                navigation.Previous();
+                navigation.OnContainer = false;
+              }
               return;
             }
-            _insertionIndex = previous;
-            MathList.RemoveAt(ref _insertionIndex);
+            // in case of two lists we will move to the previous list for exmple //frac{square}{|2323} >> //frac{square|}{2323}
+            navigation.PreviousList();
+            navigation.MoveToLastAtom();
+            return;
           }
-        }
-        // check if the last atom is an atom with script that shouldn't be deleted
-        bool ShouldMoveLeft(MathListIndex previous) {
-          if (LastAtomHasScript(previous)) {
-            if (AtomIsInTheScript(previous)) {
+          if (navigation.OnRightSide) {
+            // if we are on the right side of the atom we will check for scripts or containers in this order
+            if (GoToScript()) {
+              navigation.OnRightSide = false;
+              return;
+            }
+            if (GoToContainer()) {
+              navigation.OnRightSide = false;
+              return;
+            }
+            // if we didn't find any scripts or containers we will move to prv atom
+            navigation.Previous();
+            return;
+          }
+          // check and move if there is a container
+          if (GoToContainer()) {
+            return;
+          }
+          navigation.Previous();
+          navigation.OnRightSide = navigation.GetCurrentAtom?.HasScripts ?? false;
+          return;
+          bool MoveByPlaceHolder() {
+            if (navigation.GetCurrentAtom is Placeholder placeholder) {
+              if (navigation.GetCurrentList.Count == 1) {
+                if (!navigation.FirstAtomInAllLists) {
+                  return true;
+                }
+              }
+            }
+            return false;
+          }
+          bool GoToScript() {
+            var CurrentAtom = navigation.GetCurrentAtom;
+            if (CurrentAtom is null) return false;
+            if (CurrentAtom.HasScripts) {
+              navigation.MoveUp();
+              navigation.MoveToLastList();
+              navigation.MoveToLastAtom();
               return true;
             }
+            return false;
           }
-          return false;
-          bool AtomIsInTheScript(MathListIndex previous) {
-            var lastAtom = getAtom(previous);
-            if (lastAtom is Atoms.Placeholder) return false;
-            return !(previous.SubIndexType is MathListSubIndexType.Subscript or MathListSubIndexType.Superscript);
-
+          bool GoToContainer() {
+            var CurrentAtom = navigation.GetCurrentAtom;
+            if (CurrentAtom is null) return false;
+            if (CurrentAtom is IMathListContainer) {
+              navigation.MoveUp(true);
+              navigation.MoveToLastList();
+              navigation.MoveToLastAtom();
+              return true;
+            }
+            return false;
           }
-          bool LastAtomHasScript(MathListIndex previous) {
-            var lastAtom = getAtom(previous);
-            if (lastAtom is null) return false;
-            return lastAtom.HasScripts;
-      }
         }
+        void MoveCursorRightNew() {
+          if (navigation.IsLastIndex) {
+            if (navigation.IsLastList) {
+              if (navigation.Nodes.Count == 0) {
+                // in case of last atom has scripts we will move to the script
+                GoToScript();
+                  return;
+              }
 
+              // if is on continer it could move to scripts for example fraction{566}{44|}{88} 88 is the script
+              navigation.OnRightSide = !navigation.OnContainer;
+
+              navigation.MoveDown();
+              return;
+            }
+            // in case of two lists we will move to the next list for exmple //frac{square|}{2323} >> //frac{square}{|2323}
+            navigation.NextList();
+            navigation.OnRightSide = false;
+            // exmple //frac{|square}{2323} >> //frac{square|}{2323} since you cannot add atom before the placeholder
+            RightIfPlaceHolder();
+            return;
+          }
+          // go to script if not on the right side and there is a script
+          if (GoToScript()) {
+            return;
+          }
+          // default move to next atom
+          navigation.Next();
+          navigation.OnRightSide = false;
+
+          // get in the container if there is one
+          var currectatom = navigation.GetCurrentAtom;
+          if (currectatom == null) return;
+          if (currectatom is IMathListContainer) {
+            navigation.MoveUp(true);
+            RightIfPlaceHolder();
+          }
+
+          bool GoToScript() {
+            var currectatom = navigation.GetCurrentAtom;
+            if (!navigation.OnRightSide && currectatom != null && currectatom.HasScripts) {
+              navigation.MoveUp();
+              navigation.OnRightSide = false;
+              RightIfPlaceHolder();
+              return true;
+            }
+            return false;
+          }
+          void RightIfPlaceHolder() {
+            if (navigation.GetNextAtom is Placeholder) {
+              navigation.Next();
+              navigation.OnRightSide = false;
+            }
+          }
+        }
       }
-      void InsertAtom(MathAtom atom) {
-        // insert atom by his script/radical
-        MathList.InsertAndAdvance(ref _insertionIndex, atom,
-       atom switch {
-         Atoms.Fraction _ => MathListSubIndexType.Numerator,
-         Atoms.Radical { Degree: { } d } when IsPlaceholderList(d) => MathListSubIndexType.Degree,
-         Atoms.Radical _ => MathListSubIndexType.Radicand,
-         _ => MathListSubIndexType.None
-       });
-        static bool IsPlaceholderList(MathList ml) => ml.Count == 1 && ml[0] is Atoms.Placeholder;
+      void DeleteBackwardsNew() {
+        if (navigation.FirstAtomInAllLists) {
+          return;
+        }
+        if (ShouldMoveLeft()) {
+          MoveCursor(Diraction.Left);
+          return;
+        }
+        MathList.RemoveLast(ref navigation);
+        bool ShouldMoveLeft() {
+          // if the current atom is a placeholder and it is the only atom in the list or last atom is a container 
+          return (navigation.OnRightSide && navigation.GetCurrentAtom is MathAtom M && M.HasScripts || navigation.GetCurrentAtom is IMathListContainer);
+        }
       }
-      void InsertSymbolName(string name, bool subscript = false, bool superscript = false) {
+      void InsertAtomNew(MathAtom atom) {
+        MathList.InsertNav(atom, ref navigation);
+      }
+      void InsertSymbolNameNew(string name, bool subscript = false, bool superscript = false) {
         // get atomcommand
         var atom =
           LaTeXSettings.AtomForCommand(name) ??
             throw new InvalidCodePathException("Looks like someone mistyped atom symbol name...");
         // insert atom symbole
-        InsertAtom(atom);
+        InsertAtomNew(atom);
+        // \int _2^{\square } expected
         // insert scripts (first the super and then the sub) by the needs
         switch (subscript, superscript) {
           case (true, true):
-            HandleScriptButton(true);
-            _insertionIndex = _insertionIndex.LevelDown()?.Next
-              ?? throw new InvalidCodePathException(
-                "_insertionIndex.previousIndex returned null despite script button handling");
-            HandleScriptButton(false);
+            HandleScriptButtonNew(true);
+            navigation.MoveDown();
+            HandleScriptButtonNew(false);
             break;
           case (false, true):
-            HandleScriptButton(true);
+            HandleScriptButtonNew(true);
             break;
           case (true, false):
-            HandleScriptButton(false);
+            HandleScriptButtonNew(false);
             break;
           case (false, false):
             break;
         }
       }
+      // Convert the input to a command and insert it or handle it
       void ConvertClick(MathKeyboardInput input) {
         switch (input) {
           // TODO: Implement up/down buttons
@@ -518,36 +347,36 @@ namespace CSharpMath.Editor {
             MoveCursor(Diraction.Right);
             break;
           case MathKeyboardInput.Backspace:
-            DeleteBackwards();
+            DeleteBackwardsNew();
             break;
           case MathKeyboardInput.Clear:
             MathList.Clear();
-            InsertionIndex = MathListIndex.Level0Index(0);
+            navigation = new MathNavigation(MathList);
             break;
           case MathKeyboardInput.Return:
             return;
           case MathKeyboardInput.Dismiss:
             return;
           case MathKeyboardInput.Slash:
-            HandleSlashButton();
+            HandleSlashButtonNew();
             break;
           case MathKeyboardInput.Power:
-            HandleScriptButton(true);
+            HandleScriptButtonNew(true);
             break;
           case MathKeyboardInput.Subscript:
-            HandleScriptButton(false);
+            HandleScriptButtonNew(false);
             break;
           case MathKeyboardInput.Fraction:
-            InsertAtom(new Atoms.Fraction(LaTeXSettings.PlaceholderList, LaTeXSettings.PlaceholderList));
+            InsertAtomNew(new Atoms.Fraction(LaTeXSettings.PlaceholderList, LaTeXSettings.PlaceholderList));
             break;
           case MathKeyboardInput.SquareRoot:
-            InsertAtom(new Atoms.Radical(new MathList(), LaTeXSettings.PlaceholderList));
+            InsertAtomNew(new Atoms.Radical(new MathList(), LaTeXSettings.PlaceholderList));
             break;
           case MathKeyboardInput.CubeRoot:
-            InsertAtom(new Atoms.Radical(new MathList(new Atoms.Number("3")), LaTeXSettings.PlaceholderList));
+            InsertAtomNew(new Atoms.Radical(new MathList(new Atoms.Number("3")), LaTeXSettings.PlaceholderList));
             break;
           case MathKeyboardInput.NthRoot:
-            InsertAtom(new Atoms.Radical(LaTeXSettings.PlaceholderList, LaTeXSettings.PlaceholderList));
+            InsertAtomNew(new Atoms.Radical(LaTeXSettings.PlaceholderList, LaTeXSettings.PlaceholderList));
             break;
           case MathKeyboardInput.BothRoundBrackets:
             InsertInner("(", ")");
@@ -562,213 +391,213 @@ namespace CSharpMath.Editor {
             InsertInner("|", "|");
             break;
           case MathKeyboardInput.BaseEPower:
-            InsertAtom(LaTeXSettings.AtomForCommand("e")
+            InsertAtomNew(LaTeXSettings.AtomForCommand("e")
               ?? throw new InvalidCodePathException($"{nameof(LaTeXSettings.AtomForCommand)} returned null for e"));
-            HandleScriptButton(true);
+            HandleScriptButtonNew(true);
             break;
           case MathKeyboardInput.Caret:
-            InsertSymbolName(@"\Caret");
+            InsertSymbolNameNew(@"\Caret");
             break;
           case MathKeyboardInput.Logarithm:
-            InsertSymbolName(@"\log");
+            InsertSymbolNameNew(@"\log");
             break;
           case MathKeyboardInput.NaturalLogarithm:
-            InsertSymbolName(@"\ln");
+            InsertSymbolNameNew(@"\ln");
             break;
           case MathKeyboardInput.LogarithmWithBase:
-            InsertSymbolName(@"\log", subscript: true);
+            InsertSymbolNameNew(@"\log", subscript: true);
             break;
           case MathKeyboardInput.Sine:
-            InsertSymbolName(@"\sin");
+            InsertSymbolNameNew(@"\sin");
             break;
           case MathKeyboardInput.Cosine:
-            InsertSymbolName(@"\cos");
+            InsertSymbolNameNew(@"\cos");
             break;
           case MathKeyboardInput.Tangent:
-            InsertSymbolName(@"\tan");
+            InsertSymbolNameNew(@"\tan");
             break;
           case MathKeyboardInput.Cotangent:
-            InsertSymbolName(@"\cot");
+            InsertSymbolNameNew(@"\cot");
             break;
           case MathKeyboardInput.Secant:
-            InsertSymbolName(@"\sec");
+            InsertSymbolNameNew(@"\sec");
             break;
           case MathKeyboardInput.Cosecant:
-            InsertSymbolName(@"\csc");
+            InsertSymbolNameNew(@"\csc");
             break;
           case MathKeyboardInput.ArcSine:
-            InsertSymbolName(@"\arcsin");
+            InsertSymbolNameNew(@"\arcsin");
             break;
           case MathKeyboardInput.ArcCosine:
-            InsertSymbolName(@"\arccos");
+            InsertSymbolNameNew(@"\arccos");
             break;
           case MathKeyboardInput.ArcTangent:
-            InsertSymbolName(@"\arctan");
+            InsertSymbolNameNew(@"\arctan");
             break;
           case MathKeyboardInput.ArcCotangent:
-            InsertSymbolName(@"\arccot");
+            InsertSymbolNameNew(@"\arccot");
             break;
           case MathKeyboardInput.ArcSecant:
-            InsertSymbolName(@"\arcsec");
+            InsertSymbolNameNew(@"\arcsec");
             break;
           case MathKeyboardInput.ArcCosecant:
-            InsertSymbolName(@"\arccsc");
+            InsertSymbolNameNew(@"\arccsc");
             break;
           case MathKeyboardInput.HyperbolicSine:
-            InsertSymbolName(@"\sinh");
+            InsertSymbolNameNew(@"\sinh");
             break;
           case MathKeyboardInput.HyperbolicCosine:
-            InsertSymbolName(@"\cosh");
+            InsertSymbolNameNew(@"\cosh");
             break;
           case MathKeyboardInput.HyperbolicTangent:
-            InsertSymbolName(@"\tanh");
+            InsertSymbolNameNew(@"\tanh");
             break;
           case MathKeyboardInput.HyperbolicCotangent:
-            InsertSymbolName(@"\coth");
+            InsertSymbolNameNew(@"\coth");
             break;
           case MathKeyboardInput.HyperbolicSecant:
-            InsertSymbolName(@"\sech");
+            InsertSymbolNameNew(@"\sech");
             break;
           case MathKeyboardInput.HyperbolicCosecant:
-            InsertSymbolName(@"\csch");
+            InsertSymbolNameNew(@"\csch");
             break;
           case MathKeyboardInput.AreaHyperbolicSine:
-            InsertSymbolName(@"\arsinh");
+            InsertSymbolNameNew(@"\arsinh");
             break;
           case MathKeyboardInput.AreaHyperbolicCosine:
-            InsertSymbolName(@"\arcosh");
+            InsertSymbolNameNew(@"\arcosh");
             break;
           case MathKeyboardInput.AreaHyperbolicTangent:
-            InsertSymbolName(@"\artanh");
+            InsertSymbolNameNew(@"\artanh");
             break;
           case MathKeyboardInput.AreaHyperbolicCotangent:
-            InsertSymbolName(@"\arcoth");
+            InsertSymbolNameNew(@"\arcoth");
             break;
           case MathKeyboardInput.AreaHyperbolicSecant:
-            InsertSymbolName(@"\arsech");
+            InsertSymbolNameNew(@"\arsech");
             break;
           case MathKeyboardInput.AreaHyperbolicCosecant:
-            InsertSymbolName(@"\arcsch");
+            InsertSymbolNameNew(@"\arcsch");
             break;
           case MathKeyboardInput.LimitWithBase:
-            InsertSymbolName(@"\lim", subscript: true);
+            InsertSymbolNameNew(@"\lim", subscript: true);
             break;
           case MathKeyboardInput.Integral:
-            InsertSymbolName(@"\int");
+            InsertSymbolNameNew(@"\int");
             break;
           case MathKeyboardInput.IntegralLowerLimit:
-            InsertSymbolName(@"\int", subscript: true);
+            InsertSymbolNameNew(@"\int", subscript: true);
             break;
           case MathKeyboardInput.IntegralUpperLimit:
-            InsertSymbolName(@"\int", superscript: true);
+            InsertSymbolNameNew(@"\int", superscript: true);
             break;
           case MathKeyboardInput.IntegralBothLimits:
-            InsertSymbolName(@"\int", subscript: true, superscript: true);
+            InsertSymbolNameNew(@"\int", subscript: true, superscript: true);
             break;
           case MathKeyboardInput.Summation:
-            InsertSymbolName(@"\sum");
+            InsertSymbolNameNew(@"\sum");
             break;
           case MathKeyboardInput.SummationLowerLimit:
-            InsertSymbolName(@"\sum", subscript: true);
+            InsertSymbolNameNew(@"\sum", subscript: true);
             break;
           case MathKeyboardInput.SummationUpperLimit:
-            InsertSymbolName(@"\sum", superscript: true);
+            InsertSymbolNameNew(@"\sum", superscript: true);
             break;
           case MathKeyboardInput.SummationBothLimits:
-            InsertSymbolName(@"\sum", subscript: true, superscript: true);
+            InsertSymbolNameNew(@"\sum", subscript: true, superscript: true);
             break;
           case MathKeyboardInput.Product:
-            InsertSymbolName(@"\prod");
+            InsertSymbolNameNew(@"\prod");
             break;
           case MathKeyboardInput.ProductLowerLimit:
-            InsertSymbolName(@"\prod", subscript: true);
+            InsertSymbolNameNew(@"\prod", subscript: true);
             break;
           case MathKeyboardInput.ProductUpperLimit:
-            InsertSymbolName(@"\prod", superscript: true);
+            InsertSymbolNameNew(@"\prod", superscript: true);
             break;
           case MathKeyboardInput.ProductBothLimits:
-            InsertSymbolName(@"\prod", subscript: true, superscript: true);
+            InsertSymbolNameNew(@"\prod", subscript: true, superscript: true);
             break;
           case MathKeyboardInput.DoubleIntegral:
-            InsertSymbolName(@"\iint");
+            InsertSymbolNameNew(@"\iint");
             break;
           case MathKeyboardInput.TripleIntegral:
-            InsertSymbolName(@"\iiint");
+            InsertSymbolNameNew(@"\iiint");
             break;
           case MathKeyboardInput.QuadrupleIntegral:
-            InsertSymbolName(@"\iiiint");
+            InsertSymbolNameNew(@"\iiiint");
             break;
           case MathKeyboardInput.ContourIntegral:
-            InsertSymbolName(@"\oint");
+            InsertSymbolNameNew(@"\oint");
             break;
           case MathKeyboardInput.DoubleContourIntegral:
-            InsertSymbolName(@"\oiint");
+            InsertSymbolNameNew(@"\oiint");
             break;
           case MathKeyboardInput.TripleContourIntegral:
-            InsertSymbolName(@"\oiiint");
+            InsertSymbolNameNew(@"\oiiint");
             break;
           case MathKeyboardInput.ClockwiseIntegral:
-            InsertSymbolName(@"\intclockwise");
+            InsertSymbolNameNew(@"\intclockwise");
             break;
           case MathKeyboardInput.ClockwiseContourIntegral:
-            InsertSymbolName(@"\varointclockwise");
+            InsertSymbolNameNew(@"\varointclockwise");
             break;
           case MathKeyboardInput.CounterClockwiseContourIntegral:
-            InsertSymbolName(@"\ointctrclockwise");
+            InsertSymbolNameNew(@"\ointctrclockwise");
             break;
           case MathKeyboardInput.LeftArrow:
-            InsertSymbolName(@"\leftarrow");
+            InsertSymbolNameNew(@"\leftarrow");
             break;
           case MathKeyboardInput.UpArrow:
-            InsertSymbolName(@"\uparrow");
+            InsertSymbolNameNew(@"\uparrow");
             break;
           case MathKeyboardInput.RightArrow:
-            InsertSymbolName(@"\rightarrow");
+            InsertSymbolNameNew(@"\rightarrow");
             break;
           case MathKeyboardInput.DownArrow:
-            InsertSymbolName(@"\downarrow");
+            InsertSymbolNameNew(@"\downarrow");
             break;
           case MathKeyboardInput.PartialDifferential:
-            InsertSymbolName(@"\partial");
+            InsertSymbolNameNew(@"\partial");
             break;
           case MathKeyboardInput.NotEquals:
-            InsertSymbolName(@"\neq");
+            InsertSymbolNameNew(@"\neq");
             break;
           case MathKeyboardInput.LessOrEquals:
-            InsertSymbolName(@"\leq");
+            InsertSymbolNameNew(@"\leq");
             break;
           case MathKeyboardInput.GreaterOrEquals:
-            InsertSymbolName(@"\geq");
+            InsertSymbolNameNew(@"\geq");
             break;
           case MathKeyboardInput.Multiply:
-            InsertSymbolName(@"\times");
+            InsertSymbolNameNew(@"\times");
             break;
           case MathKeyboardInput.Divide:
-            InsertSymbolName(@"\div");
+            InsertSymbolNameNew(@"\div");
             break;
           case MathKeyboardInput.Infinity:
-            InsertSymbolName(@"\infty");
+            InsertSymbolNameNew(@"\infty");
             break;
           case MathKeyboardInput.Degree:
-            InsertSymbolName(@"\degree");
+            InsertSymbolNameNew(@"\degree");
             break;
           case MathKeyboardInput.Angle:
-            InsertSymbolName(@"\angle");
+            InsertSymbolNameNew(@"\angle");
             break;
           case MathKeyboardInput.LeftCurlyBracket:
-            InsertSymbolName(@"\{");
+            InsertSymbolNameNew(@"\{");
             break;
           case MathKeyboardInput.RightCurlyBracket:
-            InsertSymbolName(@"\}");
+            InsertSymbolNameNew(@"\}");
             break;
           case MathKeyboardInput.Percentage:
-            InsertSymbolName(@"\%");
+            InsertSymbolNameNew(@"\%");
             break;
           case MathKeyboardInput.Space:
-            InsertSymbolName(@"\ ");
+            InsertSymbolNameNew(@"\ ");
             break;
           case MathKeyboardInput.Prime:
-            InsertAtom(new Atoms.Prime(1));
+            InsertAtomNew(new Atoms.Prime(1));
             break;
           case MathKeyboardInput.LeftRoundBracket:
           case MathKeyboardInput.RightRoundBracket:
@@ -848,7 +677,7 @@ namespace CSharpMath.Editor {
           case MathKeyboardInput.SmallY:
           case MathKeyboardInput.SmallZ:
             var Atom = LaTeXSettings.AtomForCommand(new string((char)input, 1));
-            InsertAtom(Atom ?? throw new InvalidCodePathException($"{nameof(LaTeXSettings.AtomForCommand)} returned null for {input}"));
+            InsertAtomNew(Atom ?? throw new InvalidCodePathException($"{nameof(LaTeXSettings.AtomForCommand)} returned null for {input}"));
             break;
           case MathKeyboardInput.Alpha:
           case MathKeyboardInput.Beta:
@@ -906,18 +735,17 @@ namespace CSharpMath.Editor {
           case MathKeyboardInput.SmallOmega:
             // All Greek letters are rendered as variables.
             var variableAtom = new Atoms.Variable(((char)input).ToStringInvariant());
-            InsertAtom(variableAtom);
+            InsertAtomNew(variableAtom);
             break;
           default:
             break;
         }
       }
-      MathAtom? getAtom(MathListIndex? mathListIndex) => MathList?.AtomAt(mathListIndex);
-      MathListSubIndexType finalSubType() => _insertionIndex.FinalSubIndexType;
     }
 
     public void Clear() {
       MathList.Clear();
+      navigation = new MathNavigation(MathList);
       InsertionIndex = MathListIndex.Level0Index(0);
     }
     /// <summary>
@@ -928,13 +756,13 @@ namespace CSharpMath.Editor {
     /// <param name="ToLeft"></param>
     /// <param name="BackToFirstPos"></param>
     /// <returns></returns>
-    public MathListIndex? SerachFor(Func<MathListIndex, bool> Condition,
+    public MathListIndex? SerachFor(Func<MathNavigation, bool> Condition,
       out int CountMovement, bool ToLeft = true, bool BackToFirstPos = true) {
 
       var CopyIndex = InsertionIndex;
 
-      var isFirst = () => (InsertionIndex?.Previous == null && InsertionIndex?.LevelDown() == null);
-      var isLast = () => (InsertionIndex?.LevelDown() == null && MathList.AtomAt(InsertionIndex) == null);
+      var isFirst = () => navigation.FirstAtomInAllLists;
+      var isLast = () => navigation.IsLastList && navigation.IsLastIndex;
 
       Action Movement = ToLeft ? () => KeyPress(MathKeyboardInput.Left) : () => KeyPress(MathKeyboardInput.Right);
       Func<bool> OnTheEdge = ToLeft ? isFirst : isLast;
@@ -943,7 +771,7 @@ namespace CSharpMath.Editor {
       CountMovement = 1;
 
       while (!OnTheEdge()) {
-        if (Condition(InsertionIndex!)) {
+        if (Condition(navigation)) {
           break;
         }
         Movement();
@@ -961,14 +789,14 @@ namespace CSharpMath.Editor {
 
     }
     public void ChangeMathlistByAtom(MathList mathlist, MathAtom atom, bool setIndexAfterAtom = false) {
-      InsertionIndex = MathListIndex.Level0Index(0);
       MathList = mathlist;
+      navigation = new MathNavigation(MathList);
       ChangeInsertionIndexByAtom(atom, setIndexAfterAtom);
     }
     public void ChangeInsertionIndexByAtom(MathAtom atom, bool setIndexAfterAtom = false) {
 
-      var refernceEqual = (MathListIndex i) => {
-        var currectAtom = MathList?.AtomAt(i);
+      var refernceEqual = (MathNavigation i) => {
+        var currectAtom = navigation.GetCurrentAtom;
         if (object.ReferenceEquals(currectAtom, (atom))) {
           return true;
         }
@@ -977,7 +805,7 @@ namespace CSharpMath.Editor {
 
       if (MathList.Count == 0) return;
 
-      if (!refernceEqual(InsertionIndex)) {
+      if (!refernceEqual(navigation)) {
         SerachFor(refernceEqual, out _, false, false);
       }
 
@@ -987,7 +815,7 @@ namespace CSharpMath.Editor {
     }
     public void ChangeMathList(MathList mathlist) {
       MathList = mathlist;
-      InsertionIndex = MathListIndex.Level0Index(mathlist.Count);
+      navigation = new MathNavigation(MathList);
     }
   }
 }

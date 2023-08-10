@@ -23,221 +23,224 @@ namespace CSharpMath.Editor.Visualizer {
     ///  the contents of this method with the code editor.
     /// </summary>
     private void InitializeComponent() {
-            this.CommandFire = new System.Windows.Forms.ComboBox();
-            this.CommandList = new System.Windows.Forms.ListView();
-            this.AddCommand = new System.Windows.Forms.Button();
-            this.Fire = new System.Windows.Forms.Button();
-            this.LatexLable = new System.Windows.Forms.Label();
-            this.Delete = new System.Windows.Forms.Button();
-            this.DebugButton = new System.Windows.Forms.Button();
-            this.button1 = new System.Windows.Forms.Button();
-            this.label1 = new System.Windows.Forms.Label();
-            this.Left = new System.Windows.Forms.Button();
-            this.Right = new System.Windows.Forms.Button();
-            this.Up = new System.Windows.Forms.Button();
-            this.Down = new System.Windows.Forms.Button();
-            this.checkBox1 = new System.Windows.Forms.CheckBox();
-            this.checkBox2 = new System.Windows.Forms.CheckBox();
-            this.MouseCheckBox = new System.Windows.Forms.CheckBox();
-            this.SuspendLayout();
-            // 
-            // CommandFire
-            // 
-            this.CommandFire.FormattingEnabled = true;
-            this.CommandFire.Location = new System.Drawing.Point(14, 331);
-            this.CommandFire.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.CommandFire.Name = "CommandFire";
-            this.CommandFire.Size = new System.Drawing.Size(365, 28);
-            this.CommandFire.TabIndex = 0;
-            this.CommandFire.KeyDown += new System.Windows.Forms.KeyEventHandler(this.CommandFire_KeyDown);
-            // 
-            // CommandList
-            // 
-            this.CommandList.Location = new System.Drawing.Point(14, 16);
-            this.CommandList.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.CommandList.Name = "CommandList";
-            this.CommandList.Size = new System.Drawing.Size(365, 305);
-            this.CommandList.TabIndex = 1;
-            this.CommandList.UseCompatibleStateImageBehavior = false;
-            // 
-            // AddCommand
-            // 
-            this.AddCommand.Location = new System.Drawing.Point(14, 369);
-            this.AddCommand.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.AddCommand.Name = "AddCommand";
-            this.AddCommand.Size = new System.Drawing.Size(86, 31);
-            this.AddCommand.TabIndex = 2;
-            this.AddCommand.Text = "Add";
-            this.AddCommand.UseVisualStyleBackColor = true;
-            this.AddCommand.Click += new System.EventHandler(this.AddCommand_Click);
-            // 
-            // Fire
-            // 
-            this.Fire.Location = new System.Drawing.Point(202, 369);
-            this.Fire.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.Fire.Name = "Fire";
-            this.Fire.Size = new System.Drawing.Size(94, 31);
-            this.Fire.TabIndex = 3;
-            this.Fire.Text = "Fire";
-            this.Fire.UseVisualStyleBackColor = true;
-            this.Fire.Click += new System.EventHandler(this.Fire_Click);
-            // 
-            // LatexLable
-            // 
-            this.LatexLable.AutoSize = true;
-            this.LatexLable.Font = new System.Drawing.Font("Tahoma", 24F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.LatexLable.Location = new System.Drawing.Point(97, 444);
-            this.LatexLable.Name = "LatexLable";
-            this.LatexLable.Size = new System.Drawing.Size(184, 48);
-            this.LatexLable.TabIndex = 4;
-            this.LatexLable.Text = "MathText";
-            this.LatexLable.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // Delete
-            // 
-            this.Delete.Location = new System.Drawing.Point(106, 369);
-            this.Delete.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.Delete.Name = "Delete";
-            this.Delete.Size = new System.Drawing.Size(89, 31);
-            this.Delete.TabIndex = 5;
-            this.Delete.Text = "Delete";
-            this.Delete.UseVisualStyleBackColor = true;
-            this.Delete.Click += new System.EventHandler(this.Delete_Click);
-            // 
-            // DebugButton
-            // 
-            this.DebugButton.Location = new System.Drawing.Point(303, 369);
-            this.DebugButton.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.DebugButton.Name = "DebugButton";
-            this.DebugButton.Size = new System.Drawing.Size(77, 31);
-            this.DebugButton.TabIndex = 6;
-            this.DebugButton.Text = "Debug";
-            this.DebugButton.UseVisualStyleBackColor = true;
-            this.DebugButton.Click += new System.EventHandler(this.DebugButton_Click);
-            // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(250, 29);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(10, 33);
-            this.button1.TabIndex = 7;
-            this.button1.Text = "Start";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Visible = false;
-            // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(641, 11);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(80, 20);
-            this.label1.TabIndex = 8;
-            this.label1.Text = "GrafhTable";
-            // 
-            // Left
-            // 
-            this.Left.Location = new System.Drawing.Point(14, 407);
-            this.Left.Name = "Left";
-            this.Left.Size = new System.Drawing.Size(86, 29);
-            this.Left.TabIndex = 9;
-            this.Left.Text = "Left";
-            this.Left.UseVisualStyleBackColor = true;
-            this.Left.Click += new System.EventHandler(this.Left_Click);
-            // 
-            // Right
-            // 
-            this.Right.Location = new System.Drawing.Point(303, 407);
-            this.Right.Name = "Right";
-            this.Right.Size = new System.Drawing.Size(75, 29);
-            this.Right.TabIndex = 10;
-            this.Right.Text = "Right";
-            this.Right.UseVisualStyleBackColor = true;
-            this.Right.Click += new System.EventHandler(this.Right_Click);
-            // 
-            // Up
-            // 
-            this.Up.Location = new System.Drawing.Point(106, 407);
-            this.Up.Name = "Up";
-            this.Up.Size = new System.Drawing.Size(89, 29);
-            this.Up.TabIndex = 11;
-            this.Up.Text = "Up";
-            this.Up.UseVisualStyleBackColor = true;
-            this.Up.Click += new System.EventHandler(this.Up_Click);
-            // 
-            // Down
-            // 
-            this.Down.Location = new System.Drawing.Point(202, 407);
-            this.Down.Name = "Down";
-            this.Down.Size = new System.Drawing.Size(95, 29);
-            this.Down.TabIndex = 12;
-            this.Down.Text = "Down";
-            this.Down.UseVisualStyleBackColor = true;
-            this.Down.Click += new System.EventHandler(this.Down_Click);
-            // 
-            // checkBox1
-            // 
-            this.checkBox1.AutoSize = true;
-            this.checkBox1.Location = new System.Drawing.Point(14, 560);
-            this.checkBox1.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.checkBox1.Name = "checkBox1";
-            this.checkBox1.Size = new System.Drawing.Size(115, 24);
-            this.checkBox1.TabIndex = 13;
-            this.checkBox1.Text = "Ó˘Ó‡Ï ÏÈÓÈÔ";
-            this.checkBox1.UseVisualStyleBackColor = true;
-            this.checkBox1.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
-            // 
-            // checkBox2
-            // 
-            this.checkBox2.AutoSize = true;
-            this.checkBox2.Location = new System.Drawing.Point(135, 560);
-            this.checkBox2.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.checkBox2.Name = "checkBox2";
-            this.checkBox2.Size = new System.Drawing.Size(69, 24);
-            this.checkBox2.TabIndex = 14;
-            this.checkBox2.Text = "··È‰";
-            this.checkBox2.UseVisualStyleBackColor = true;
-            this.checkBox2.CheckedChanged += new System.EventHandler(this.checkBox2_CheckedChanged);
-            // 
-            // MouseCheckBox
-            // 
-            this.MouseCheckBox.AutoSize = true;
-            this.MouseCheckBox.Location = new System.Drawing.Point(309, 560);
-            this.MouseCheckBox.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.MouseCheckBox.Name = "MouseCheckBox";
-            this.MouseCheckBox.Size = new System.Drawing.Size(88, 24);
-            this.MouseCheckBox.TabIndex = 15;
-            this.MouseCheckBox.Text = "ÚÌ ÚÎ·¯";
-            this.MouseCheckBox.UseVisualStyleBackColor = true;
-            this.MouseCheckBox.CheckedChanged += new System.EventHandler(this.MouseCheckBox_CheckedChanged);
-            // 
-            // Form1
-            // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1525, 597);
-            this.Controls.Add(this.MouseCheckBox);
-            this.Controls.Add(this.checkBox2);
-            this.Controls.Add(this.checkBox1);
-            this.Controls.Add(this.Down);
-            this.Controls.Add(this.Up);
-            this.Controls.Add(this.Right);
-            this.Controls.Add(this.Left);
-            this.Controls.Add(this.label1);
-            this.Controls.Add(this.button1);
-            this.Controls.Add(this.DebugButton);
-            this.Controls.Add(this.Delete);
-            this.Controls.Add(this.LatexLable);
-            this.Controls.Add(this.Fire);
-            this.Controls.Add(this.AddCommand);
-            this.Controls.Add(this.CommandList);
-            this.Controls.Add(this.CommandFire);
-            this.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.Name = "Form1";
-            this.Text = "Form1";
-            this.Load += new System.EventHandler(this.Form1_Load);
-            this.ResumeLayout(false);
-            this.PerformLayout();
-
+      CommandFire = new ComboBox();
+      CommandList = new ListView();
+      AddCommand = new Button();
+      Fire = new Button();
+      LatexLable = new Label();
+      Delete = new Button();
+      DebugButton = new Button();
+      label1 = new Label();
+      Left = new Button();
+      Right = new Button();
+      Up = new Button();
+      Down = new Button();
+      checkBox1 = new CheckBox();
+      checkBox2 = new CheckBox();
+      MouseCheckBox = new CheckBox();
+      KeyText = new TextBox();
+      GetKeyTest = new Button();
+      SuspendLayout();
+      // 
+      // CommandFire
+      // 
+      CommandFire.FormattingEnabled = true;
+      CommandFire.Location = new Point(12, 248);
+      CommandFire.Name = "CommandFire";
+      CommandFire.Size = new Size(320, 23);
+      CommandFire.TabIndex = 0;
+      CommandFire.KeyDown += CommandFire_KeyDown;
+      // 
+      // CommandList
+      // 
+      CommandList.Location = new Point(12, 12);
+      CommandList.Name = "CommandList";
+      CommandList.Size = new Size(320, 230);
+      CommandList.TabIndex = 1;
+      CommandList.UseCompatibleStateImageBehavior = false;
+      // 
+      // AddCommand
+      // 
+      AddCommand.Location = new Point(12, 277);
+      AddCommand.Name = "AddCommand";
+      AddCommand.Size = new Size(75, 23);
+      AddCommand.TabIndex = 2;
+      AddCommand.Text = "Add";
+      AddCommand.UseVisualStyleBackColor = true;
+      AddCommand.Click += AddCommand_Click;
+      // 
+      // Fire
+      // 
+      Fire.Location = new Point(177, 277);
+      Fire.Name = "Fire";
+      Fire.Size = new Size(82, 23);
+      Fire.TabIndex = 3;
+      Fire.Text = "Fire";
+      Fire.UseVisualStyleBackColor = true;
+      Fire.Click += Fire_Click;
+      // 
+      // LatexLable
+      // 
+      LatexLable.AutoSize = true;
+      LatexLable.Font = new Font("Tahoma", 24F, FontStyle.Regular, GraphicsUnit.Point);
+      LatexLable.Location = new Point(85, 333);
+      LatexLable.Name = "LatexLable";
+      LatexLable.Size = new Size(151, 39);
+      LatexLable.TabIndex = 4;
+      LatexLable.Text = "MathText";
+      LatexLable.TextAlign = ContentAlignment.MiddleCenter;
+      // 
+      // Delete
+      // 
+      Delete.Location = new Point(93, 277);
+      Delete.Name = "Delete";
+      Delete.Size = new Size(78, 23);
+      Delete.TabIndex = 5;
+      Delete.Text = "Delete";
+      Delete.UseVisualStyleBackColor = true;
+      Delete.Click += Delete_Click;
+      // 
+      // DebugButton
+      // 
+      DebugButton.Location = new Point(265, 277);
+      DebugButton.Name = "DebugButton";
+      DebugButton.Size = new Size(67, 23);
+      DebugButton.TabIndex = 6;
+      DebugButton.Text = "Debug";
+      DebugButton.UseVisualStyleBackColor = true;
+      DebugButton.Click += DebugButton_Click;
+      // 
+      // label1
+      // 
+      label1.AutoSize = true;
+      label1.Location = new Point(561, 8);
+      label1.Name = "label1";
+      label1.Size = new Size(63, 15);
+      label1.TabIndex = 8;
+      label1.Text = "GrafhTable";
+      // 
+      // Left
+      // 
+      Left.Location = new Point(12, 305);
+      Left.Margin = new Padding(3, 2, 3, 2);
+      Left.Name = "Left";
+      Left.Size = new Size(75, 22);
+      Left.TabIndex = 9;
+      Left.Text = "Left";
+      Left.UseVisualStyleBackColor = true;
+      Left.Click += Left_Click;
+      // 
+      // Right
+      // 
+      Right.Location = new Point(265, 305);
+      Right.Margin = new Padding(3, 2, 3, 2);
+      Right.Name = "Right";
+      Right.Size = new Size(66, 22);
+      Right.TabIndex = 10;
+      Right.Text = "Right";
+      Right.UseVisualStyleBackColor = true;
+      Right.Click += Right_Click;
+      // 
+      // Up
+      // 
+      Up.Location = new Point(93, 305);
+      Up.Margin = new Padding(3, 2, 3, 2);
+      Up.Name = "Up";
+      Up.Size = new Size(78, 22);
+      Up.TabIndex = 11;
+      Up.Text = "Up";
+      Up.UseVisualStyleBackColor = true;
+      Up.Click += Up_Click;
+      // 
+      // Down
+      // 
+      Down.Location = new Point(177, 305);
+      Down.Margin = new Padding(3, 2, 3, 2);
+      Down.Name = "Down";
+      Down.Size = new Size(83, 22);
+      Down.TabIndex = 12;
+      Down.Text = "Down";
+      Down.UseVisualStyleBackColor = true;
+      Down.Click += Down_Click;
+      // 
+      // checkBox1
+      // 
+      checkBox1.AutoSize = true;
+      checkBox1.Location = new Point(12, 420);
+      checkBox1.Name = "checkBox1";
+      checkBox1.Size = new Size(93, 19);
+      checkBox1.TabIndex = 13;
+      checkBox1.Text = "◊û◊©◊û◊ê◊ú ◊ú◊ô◊û◊ô◊ü";
+      checkBox1.UseVisualStyleBackColor = true;
+      checkBox1.CheckedChanged += checkBox1_CheckedChanged;
+      // 
+      // checkBox2
+      // 
+      checkBox2.AutoSize = true;
+      checkBox2.Location = new Point(118, 420);
+      checkBox2.Name = "checkBox2";
+      checkBox2.Size = new Size(56, 19);
+      checkBox2.TabIndex = 14;
+      checkBox2.Text = "◊ë◊ë◊†◊ô◊î";
+      checkBox2.UseVisualStyleBackColor = true;
+      checkBox2.CheckedChanged += checkBox2_CheckedChanged;
+      // 
+      // MouseCheckBox
+      // 
+      MouseCheckBox.AutoSize = true;
+      MouseCheckBox.Location = new Point(270, 420);
+      MouseCheckBox.Name = "MouseCheckBox";
+      MouseCheckBox.Size = new Size(72, 19);
+      MouseCheckBox.TabIndex = 15;
+      MouseCheckBox.Text = "◊¢◊ù ◊¢◊õ◊ë◊®";
+      MouseCheckBox.UseVisualStyleBackColor = true;
+      MouseCheckBox.CheckedChanged += MouseCheckBox_CheckedChanged;
+      // 
+      // KeyText
+      // 
+      KeyText.Location = new Point(93, 380);
+      KeyText.Margin = new Padding(3, 2, 3, 2);
+      KeyText.Name = "KeyText";
+      KeyText.Size = new Size(213, 23);
+      KeyText.TabIndex = 17;
+      // 
+      // GetKeyTest
+      // 
+      GetKeyTest.Location = new Point(12, 379);
+      GetKeyTest.Name = "GetKeyTest";
+      GetKeyTest.Size = new Size(75, 23);
+      GetKeyTest.TabIndex = 18;
+      GetKeyTest.Text = "GetKeyTest";
+      GetKeyTest.UseVisualStyleBackColor = true;
+      GetKeyTest.Click += GetKeyTest_Click;
+      // 
+      // Form1
+      // 
+      AutoScaleDimensions = new SizeF(7F, 15F);
+      AutoScaleMode = AutoScaleMode.Font;
+      ClientSize = new Size(1334, 448);
+      Controls.Add(GetKeyTest);
+      Controls.Add(KeyText);
+      Controls.Add(MouseCheckBox);
+      Controls.Add(checkBox2);
+      Controls.Add(checkBox1);
+      Controls.Add(Down);
+      Controls.Add(Up);
+      Controls.Add(Right);
+      Controls.Add(Left);
+      Controls.Add(label1);
+      Controls.Add(DebugButton);
+      Controls.Add(Delete);
+      Controls.Add(LatexLable);
+      Controls.Add(Fire);
+      Controls.Add(AddCommand);
+      Controls.Add(CommandList);
+      Controls.Add(CommandFire);
+      Name = "Form1";
+      Text = "Form1";
+      Load += Form1_Load;
+      ResumeLayout(false);
+      PerformLayout();
     }
 
     #endregion
@@ -249,7 +252,6 @@ namespace CSharpMath.Editor.Visualizer {
     private Label LatexLable;
     private Button Delete;
     private Button DebugButton;
-    private Button button1;
     private Label label1;
     private Button Left;
     private Button Right;
@@ -258,5 +260,7 @@ namespace CSharpMath.Editor.Visualizer {
     private CheckBox checkBox1;
     private CheckBox checkBox2;
     private CheckBox MouseCheckBox;
+    private TextBox KeyText;
+    private Button GetKeyTest;
   }
 }

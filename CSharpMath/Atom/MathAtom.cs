@@ -96,8 +96,6 @@ namespace CSharpMath.Atom {
     public bool EqualsAtom(MathAtom otherAtom) =>
       Nucleus == otherAtom.Nucleus &&
       GetType() == otherAtom.GetType() &&
-      //IndexRange == otherAtom.IndexRange &&
-      //FontStyle == otherAtom.FontStyle &&
       Superscript.Equals(otherAtom.Superscript) &&
       Subscript.Equals(otherAtom.Subscript);
 

@@ -9,6 +9,7 @@ namespace CSharpMath.EvaluationTests {
   using K = CSharpMath.Editor.MathKeyboardInput; // 'K'ey
   using T = Xunit.InlineDataAttribute; // 'T'est
   public class EvalutionNewSystem {
+    // for now the tests are not working because the new system tests is not implemented yet
         static void Test(string angourimathFormat, K[] inputs) {
       var keyboard = new LatexMathKeyboard();
       keyboard.KeyPress(inputs);

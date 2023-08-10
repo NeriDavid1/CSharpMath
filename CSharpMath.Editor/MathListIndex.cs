@@ -1,6 +1,8 @@
 namespace CSharpMath.Editor {
+  using System.Diagnostics;
   using System.Linq;
   ///<summary>The type of the subindex denotes what branch the path to the atom that this index points to takes.</summary>
+  [DebuggerDisplay("{FinalSubIndexType}")]
   public enum MathListSubIndexType : byte {
     ///<summary>The index denotes the whole atom, subIndex is null</summary>
     None = 0,
@@ -63,7 +65,12 @@ namespace CSharpMath.Editor {
     public MathListIndex LevelUpWithSubIndex(MathListSubIndexType type, MathListIndex? subIndex) =>
       SubIndexType is MathListSubIndexType.None ? IndexAtLocation(AtomIndex, type, subIndex) :
       IndexAtLocation(AtomIndex, SubIndexType, SubIndex?.LevelUpWithSubIndex(type, subIndex));
+
     ///<summary>Creates a new index by removing the last index item. If this is the last one, then returns nil.</summary>
+    ///<example> 15^{[index]2/4} -> [ 0 , superscript, [ 0, denominator ] ] ->
+    /// after leveldown -> 15^{[index]{2}/{4}} -> [ 0 , superscript ] </example>
+    /// and after another level down it will be 15^{{2}/{4}}[index] -> [ 0, none ]
+    /// ofcourse the index wouldn't will move to a different atom if the subindex is not none.
     public MathListIndex? LevelDown() =>
       SubIndexType is MathListSubIndexType.None ? null :
       SubIndex?.LevelDown() is MathListIndex subIndex ? IndexAtLocation(AtomIndex, SubIndexType, subIndex) :
@@ -76,6 +83,7 @@ namespace CSharpMath.Editor {
      * This returns <see cref="null"/> if there is no previous index, i.e.
      * the innermost subindex points to the beginning of a line.</summary>
      */
+    /// <example> 15^{45[index]] -> [ 0, superscript, [ 1, none ] ] -> previous -> [ 0, superscript, [ 0, none ] ] </example>
     public MathListIndex? Previous => SubIndexType switch
     {
       MathListSubIndexType.None => AtomIndex > 0 ? Level0Index(AtomIndex - 1) : null,
@@ -118,9 +126,11 @@ namespace CSharpMath.Editor {
       SubIndexType is MathListSubIndexType.None || SubIndex is null ? AtomIndex : SubIndex.FinalIndex;
 
     ///<summary>Returns the type of the innermost sub index.</summary>
+    /// actually it returns the type of the subindex that is the last one in the chain.
+    /// <example> if we have 12^{34}_56, and the index is point on 5 then the subindex type is <see cref="MathListSubIndexType.Denominator"/>.
     public MathListSubIndexType FinalSubIndexType =>
       SubIndex?.SubIndex is null ? SubIndexType : SubIndex.FinalSubIndexType;
-
+   ///<summary>Returns the innermost sub index.</summary>`
     public MathListIndex FinalSubIndexParent =>
       SubIndex?.SubIndex is null ? this : SubIndex.FinalSubIndexParent;
 

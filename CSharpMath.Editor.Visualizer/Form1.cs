@@ -1,5 +1,6 @@
 using System.Drawing.Text;
 using System.Security.AccessControl;
+using System.Text;
 using CSharpMath.Atom;
 using CSharpMath.Editor;
 using CSharpMath.Editor.Visualizer.Properties;
@@ -59,11 +60,12 @@ namespace CSharpMath.Editor.Visualizer {
       clearButtons();
       if (checkBox1.Checked) {
         latexMathKeyboard.KeyPress(inputList.ToArray());
-        CreateGrafhTableByLeftRight();
+        //CreateGrafhTableByLeftRight();
       } else {
         foreach (MathKeyboardInput i in inputList) {
           latexMathKeyboard.KeyPress(i);
-          CreateGrafhTableByBuilding();
+          var theatom = latexMathKeyboard.navigation.ToString();
+          //CreateGrafhTableByBuilding();
         }
 
       }
@@ -77,21 +79,21 @@ namespace CSharpMath.Editor.Visualizer {
         buttons.Clear();
       }
     }
-
+    // unnessary since the new version of CSharpMath.Editor
     private void CreateGrafhTableByLeftRight() {
-      var pos = button1.Location;
+      var pos = GetKeyTest.Location;
       MathList matlist = latexMathKeyboard.MathList;
       MathListIndex.Level0Index(0);
       latexMathKeyboard.InsertionIndex = MathListIndex.Level0Index(0);
-      var lastatom = matlist.AtomAt(index());
+      var lastatom = latexMathKeyboard.navigation.GetCurrentAtom;
       for (int i = 0; i < inputList.Count; i++) {
-        var atom = matlist.AtomAt(index());
+        var atom = latexMathKeyboard.navigation.GetCurrentAtom;
         lastatom = atom;
         Button newButton = new Button();
         newButton.Text = atom?.TypeName + " / " + atom?.DebugString + " / " + index().SubIndexType.ToString() + " / " + index().ToString();
         pos = new Point(pos.X + 200, pos.Y);
         if (pos.X > Form1.ActiveForm.Size.Width - 80) {
-          pos.X = button1.Location.X + 200;
+          pos.X = GetKeyTest.Location.X + 200;
           pos.Y += 80;
         }
         newButton.Location = new Point(pos.X, pos.Y);
@@ -104,14 +106,16 @@ namespace CSharpMath.Editor.Visualizer {
     }
     Point lastbutton = new Point(219, 22);
     List<Button> buttons = new();
+    // unnessary since the new version of CSharpMath.Editor
     private void CreateGrafhTableByBuilding() {
-      var atom = latexMathKeyboard.MathList.AtomAt(index());
+      var atom = latexMathKeyboard.navigation.GetCurrentAtom;
       Button newButton = new Button();
       this.Controls.Add(newButton);
       newButton.Text = atom?.TypeName + " / " + latexMathKeyboard.LaTeX + " / " + index().SubIndexType.ToString() + " / " + index().ToString();
       lastbutton = new Point(lastbutton.X + 200, lastbutton.Y);
+      if (Form1.ActiveForm == null) return;
       if (lastbutton.X > Form1.ActiveForm.Size.Width - 80) {
-        lastbutton.X = button1.Location.X + 200;
+        lastbutton.X = GetKeyTest.Location.X + 200;
         lastbutton.Y += 80;
       }
       newButton.Location = new Point(lastbutton.X, lastbutton.Y);
@@ -173,6 +177,22 @@ namespace CSharpMath.Editor.Visualizer {
       } else {
         GetText = () => latexMathKeyboard.LaTeX;
       }
+    }
+
+    private String GetAsKeyTest() {
+      string Addon = "Keys.";
+      StringBuilder stringBuilder = new StringBuilder();
+      foreach (var item in inputList) {
+        stringBuilder.Append(Addon);
+        stringBuilder.Append(item.ToString());
+        stringBuilder.Append(@",");
+      }
+      stringBuilder.Remove(stringBuilder.Length - 1, 1);
+      return stringBuilder.ToString();
+    }
+
+    private void GetKeyTest_Click(object sender, EventArgs e) {
+      KeyText.Text = GetAsKeyTest();
     }
   }
 }

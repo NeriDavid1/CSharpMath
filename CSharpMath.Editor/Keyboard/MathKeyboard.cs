@@ -35,7 +35,7 @@ namespace CSharpMath.Editor {
       };
       blinkTimer.Start();
     }
-    public bool ShouldDrawCaret => InsertionPositionHighlighted && !(MathList.AtomAt(_insertionIndex) is Atoms.Placeholder);
+    public bool ShouldDrawCaret => InsertionPositionHighlighted && !(navigation.GetCurrentAtom is Atoms.Placeholder);
     bool _insertionPositionHighlighted;
     public bool InsertionPositionHighlighted {
       get => _insertionPositionHighlighted;
@@ -43,7 +43,7 @@ namespace CSharpMath.Editor {
         blinkTimer.Stop();
         blinkTimer.Start();
         _insertionPositionHighlighted = value;
-        if (MathList.AtomAt(_insertionIndex) is Atoms.Placeholder placeholder) {
+        if (navigation.GetCurrentAtom is Atoms.Placeholder placeholder) {
           (placeholder.Nucleus, placeholder.Color) =
             _insertionPositionHighlighted
             ? (LaTeXSettings.PlaceholderActiveNucleus, LaTeXSettings.PlaceholderActiveColor)
@@ -80,7 +80,7 @@ namespace CSharpMath.Editor {
         blinkTimer.Stop();
         blinkTimer.Start();
         if (value != MathKeyboardCaretState.Hidden &&
-           MathList.AtomAt(_insertionIndex) is Atoms.Placeholder placeholder)
+           navigation.GetCurrentAtom is Atoms.Placeholder placeholder)
           (placeholder.Nucleus, _caretState) =
             value == MathKeyboardCaretState.TemporarilyHidden
             ? ("\u25A1", MathKeyboardCaretState.TemporarilyHidden)
@@ -117,17 +117,6 @@ namespace CSharpMath.Editor {
     public void MoveCaretToPoint(PointF point) {
       point.Y *= -1; //inverted canvas, blah blah
       InsertionIndex = ClosestIndexToPoint(point) ?? MathListIndex.Level0Index(MathList.Atoms.Count);
-    }
-
-    // Insert a list at a given point.
-    public void InsertMathList(MathList list, PointF point) {
-      var detailedIndex = ClosestIndexToPoint(point) ?? MathListIndex.Level0Index(0);
-      // insert at the given index - but don't consider sublevels at this point
-      var index = MathListIndex.Level0Index(detailedIndex.AtomIndex);
-      foreach (var atom in list.Atoms) {
-        MathList.InsertAndAdvance(ref index, atom, MathListSubIndexType.None);
-      }
-      InsertionIndex = index; // move the index to the end of the new list.
     }
 
     public void HighlightCharacterAt(MathListIndex index, Color color) {

@@ -17,7 +17,8 @@ namespace CSharpMath.Editor.Tests {
     private static readonly TypesettingContext<TestFont, TGlyph> context = TestTypesettingContexts.Instance;
 
     static void Test(string latex, K[] inputs) {
-      var keyboard = new MathKeyboard<TestFont, TGlyph>(context, new TestFont());
+      //var keyboard = new MathKeyboard<TestFont, TGlyph>(context, new TestFont());
+      var keyboard = new LatexMathKeyboard();
       keyboard.KeyPress(inputs);
       Assert.Equal(latex, keyboard.LaTeX);
     }
@@ -160,7 +161,7 @@ namespace CSharpMath.Editor.Tests {
     [
       Theory,
       T(@"", K.Left, K.Left, K.Left, K.Right, K.Right, K.Right),
-      T(@"■^{\square }2", K.Power, K.Left, K.Left, K.Right, K.Right, K.Right, K.D2, K.Left, K.Left),
+      T(@"\square ^{\square }2", K.Power, K.Left, K.Left, K.Right, K.Right, K.Right, K.D2, K.Left, K.Left),
       T(@"+-\times \div ", K.Divide, K.Left, K.Multiply, K.Left, K.Minus, K.Left, K.Plus),
       T(@"\sin \cos \tan \arcsin \arccos \arctan ", K.ArcSine, K.ArcCosine, K.Left, K.Left,
         K.Sine, K.Cosine, K.Right, K.Right, K.ArcTangent, K.Left, K.Left, K.Left, K.Tangent),
@@ -252,7 +253,7 @@ namespace CSharpMath.Editor.Tests {
       T(@"a\left( c-2\right) ^3", K.SmallA, K.Power, K.D3, K.Left, K.Left, K.BothRoundBrackets, K.SmallC, K.Minus, K.D2),
       T(@"\square ^{\square }", K.IntegralUpperLimit, K.Left, K.Backspace),
       T(@"\square _{\square }", K.IntegralLowerLimit, K.Left, K.Backspace),
-      T(@"■_{\square }^{\square }", K.IntegralBothLimits, K.Left, K.Backspace),
+      T(@"\square _{\square }^{\square }", K.IntegralBothLimits, K.Left, K.Backspace),
       T(@"\square ^{\square }", K.SummationUpperLimit, K.Left, K.Backspace),
       T(@"\square _{\square }", K.SummationLowerLimit, K.Left, K.Backspace),
       T(@"\square ^{\square }", K.ProductUpperLimit, K.Left, K.Backspace),
@@ -296,7 +297,7 @@ namespace CSharpMath.Editor.Tests {
       T(@"eA\frac{\square }{\square }\sqrt[3]{\square }^{\square }",
         K.BaseEPower, K.Left, K.A, K.Fraction, K.Right, K.Right, K.CubeRoot, K.Right, K.B,
         K.Backspace),
-      T(@"e^{\square }",
+      T(@"eA\frac{\square }{\square }",
         K.BaseEPower, K.Left, K.A, K.Fraction, K.Right, K.Right, K.SquareRoot, K.Right, K.B,
         K.Backspace, K.Backspace, K.Backspace, K.Backspace),
       T(@"\prod _{i=1}^{\infty }", K.A, K.SummationBothLimits, K.SmallI, K.Equals, K.D1, K.Right, K.Infinity,
@@ -395,13 +396,15 @@ namespace CSharpMath.Editor.Tests {
 
   ]
     public void PlaceHolderFix(string latex, params K[] inputs) => Test(latex, inputs);
-        [
-  Theory,
-  T(@"2", K.D2, K.Power,K.Right, K.Backspace,K.Backspace),
-  T(@"2^2", K.D2, K.Power, K.D2, K.Right, K.Backspace),
-  T(@"2", K.D2, K.Power, K.D2, K.Right, K.Right, K.Backspace, K.Backspace,K.Backspace),
+    [
+Theory,
+T(@"2", K.D2, K.Power, K.Right, K.Backspace, K.Backspace),
+T(@"2^2", K.D2, K.Power, K.D2, K.Right, K.Backspace),
+T(@"2", K.D2, K.Power, K.D2, K.Right, K.Right, K.Backspace, K.Backspace, K.Backspace),
+T(@"4^6", K.Power, K.D6, K.Left, K.Left, K.D7, K.D8, K.Backspace, K.Backspace,K.D4),
 
-  ]
+
+]
     public void ScriptBackWards(string latex, params K[] inputs) => Test(latex, inputs);
 
     public void SplitByatom() {
