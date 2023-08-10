@@ -108,7 +108,7 @@ namespace CSharpMath.Editor {
 
     // Get the parent of the current list without moving down
     public MathAtom? GetListPerent() {
-      if (Nodes.Count == 0) return null;
+      if (IsTheOnlyList) return null;
       var DownNode = Nodes.Peek();
       return DownNode[DownNode.ListIndex][DownNode.Index];
     }
@@ -131,7 +131,7 @@ namespace CSharpMath.Editor {
     public bool IsLastList {
       get {
         return (CurrectNode.ListIndex == MaxLines ||
-      CurrectNode.Lines.Count(item => item is not null) == CurrectNode.ListIndex + 1 || Nodes.Count == 0);
+      CurrectNode.Lines.Count(item => item is not null) == CurrectNode.ListIndex + 1 || IsTheOnlyList);
       }
     }
   }

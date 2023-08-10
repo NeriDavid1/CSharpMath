@@ -235,7 +235,7 @@ namespace CSharpMath.Editor {
         void MoveCursorRightNew() {
           if (navigation.IsLastIndex) {
             if (navigation.IsLastList) {
-              if (navigation.Nodes.Count == 0) {
+              if (navigation.IsTheOnlyList) {
                 // in case of last atom has scripts we will move to the script
                 GoToScript();
                   return;
