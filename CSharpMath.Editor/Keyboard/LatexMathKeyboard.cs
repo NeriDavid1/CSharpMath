@@ -155,7 +155,7 @@ namespace CSharpMath.Editor {
         }
         void MoveCursorLeftNew() {
           if (MoveByPlaceHolder()) {
-          // exmple //frac{square|}{2323} >> //frac{|square}{2323} since you cannot add atom before the placeholder
+            // exmple //frac{square|}{2323} >> //frac{|square}{2323} since you cannot add atom before the placeholder
             navigation.Previous();
           }
           if (navigation.IsFirstIndex) {
@@ -238,7 +238,7 @@ namespace CSharpMath.Editor {
               if (navigation.IsTheOnlyList) {
                 // in case of last atom has scripts we will move to the script
                 GoToScript();
-                  return;
+                return;
               }
 
               // if is on continer it could move to scripts for example fraction{566}{44|}{88} 88 is the script
@@ -397,6 +397,9 @@ namespace CSharpMath.Editor {
             break;
           case MathKeyboardInput.Caret:
             InsertSymbolNameNew(@"\Caret");
+            break;
+          case MathKeyboardInput.PlusMinus:
+          InsertSymbolNameNew(@"\pm");
             break;
           case MathKeyboardInput.Logarithm:
             InsertSymbolNameNew(@"\log");
@@ -676,6 +679,7 @@ namespace CSharpMath.Editor {
           case MathKeyboardInput.SmallX:
           case MathKeyboardInput.SmallY:
           case MathKeyboardInput.SmallZ:
+
             var Atom = LaTeXSettings.AtomForCommand(new string((char)input, 1));
             InsertAtomNew(Atom ?? throw new InvalidCodePathException($"{nameof(LaTeXSettings.AtomForCommand)} returned null for {input}"));
             break;

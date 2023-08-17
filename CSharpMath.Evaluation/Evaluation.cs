@@ -12,6 +12,8 @@ namespace CSharpMath {
   using AngouriMath.Extensions;
   using CSharpMath.Atom.Atoms;
   using System.Text.RegularExpressions;
+  using AngouriMath.Core.Exceptions;
+  using System.Text;
 
   public static partial class Evaluation {
     enum Precedence {
@@ -60,10 +62,10 @@ namespace CSharpMath {
             break;
           case Radical radical:
             string degree = ConvertToMathString(radical.Degree);
-            if(degree == "") degree = "2" ;
+            if (degree == "") degree = "2";
             string radicand = ConvertToMathString(radical.Radicand);
             output += $"( {radicand} )^( 1/{degree} )";
-              break; 
+            break;
           case Inner { LeftBoundary: { Nucleus: null }, InnerList: var list }:
             output += $"({ConvertToMathString(list)})";
             break;
@@ -71,7 +73,7 @@ namespace CSharpMath {
             output += $"({ConvertToMathString(list)})";
             break;
           case Inner { LeftBoundary: { Nucleus: "|" }, InnerList: var list }:
-            output += $"({ConvertToMathString(list)})";
+            output += $"abs({ConvertToMathString(list)})";
             break;
           case Inner { LeftBoundary: var left, InnerList: var list }:
             output += $"({ConvertToMathString(list)})";
@@ -94,6 +96,8 @@ namespace CSharpMath {
               output += "*";
             } else if (binaryOperator.Nucleus == "−") {
               output += "-";
+            } else if (binaryOperator.Nucleus == @"\pm") {
+
             } else {
               output += binaryOperator.Nucleus;
             }
@@ -159,8 +163,20 @@ namespace CSharpMath {
                 i = idxOfWRT;
                 continue;
               }
+            } else if (largeOperator.Nucleus == "log") {
+              // to do
             } else {
               output += atom.Nucleus;
+            }
+            break;
+          case Ordinary ordinary: // to add
+            var nuc = ordinary.Nucleus;
+            if (nuc == "∞") {
+              output += @"+oo";
+            } else if (nuc == "-∞") {
+              output += @"-oo";
+            } else {
+              output += nuc;
             }
             break;
           default:
@@ -175,6 +191,145 @@ namespace CSharpMath {
         }
       }
       return output;
+    }
+    public static string ConvertToMathString2(IList<MathAtom> atoms) {
+      StringBuilder output = new StringBuilder();
+
+      for (int i = 0; i < atoms.Count; i++) {
+        var atom = atoms[i];
+        switch (atom) {
+          case Comment { Nucleus: var comment }:
+            break;
+          case Fraction fraction:
+            output.Append($"({ConvertToMathString2(fraction.Numerator)})/({ConvertToMathString2(fraction.Denominator)})");
+            break;
+          case Radical radical:
+            string degree = ConvertToMathString2(radical.Degree);
+            if (degree == "") degree = "2";
+            string radicand = ConvertToMathString2(radical.Radicand);
+            output.Append($"( {radicand} )^( 1/{degree} )");
+            break;
+          case Inner { LeftBoundary: { Nucleus: null }, InnerList: var list }:
+            output.Append($"({ConvertToMathString(list)})");
+            break;
+          case Inner { LeftBoundary: { Nucleus: "〈" }, InnerList: var list }:
+            output.Append($"({ConvertToMathString(list)})");
+            break;
+          case Inner { LeftBoundary: { Nucleus: "|" }, InnerList: var list }:
+            output.Append($"({ConvertToMathString(list)})");
+            break;
+          case Inner { LeftBoundary: var left, InnerList: var list }:
+            output.Append($"({ConvertToMathString(list)})");
+            break;
+          case Accent accent:
+          case Colored colored:
+          case ColorBox colorBox:
+          case RaiseBox r:
+            break;
+          case Variable variable:
+            output.Append(atom.Nucleus);
+            if (i + 1 < atoms.Count && atoms[i + 1] is Variable)
+              output.Append("*");
+            break;
+          case BinaryOperator binaryOperator:
+            if (binaryOperator.Nucleus == "·") {
+              output.Append("*");
+            } else if (binaryOperator.Nucleus == "−") {
+              output.Append("-");
+            } else if (binaryOperator.Nucleus == @"\pm") {
+              // Handle \pm case
+            } else {
+              output.Append(binaryOperator.Nucleus);
+            }
+            break;
+          case LargeOperator largeOperator:
+            if (largeOperator.Nucleus == "∫") {
+              // Figure out which kind of intergral we're dealing with
+              if (largeOperator.Subscript.Count > 0 || largeOperator.Superscript.Count > 0) {
+                // Definite integral
+
+                // Find the variable to integrate with respect to
+                bool foundWRT = false;
+                int idxOfWRT = i + 1;
+                while (!foundWRT && idxOfWRT + 1 < atoms.Count) {
+                  foundWRT = atoms[idxOfWRT] is Variable intWRTMarker && intWRTMarker.Nucleus == "d"
+                      && atoms[idxOfWRT + 1] is Variable;
+                  idxOfWRT++;
+                }
+
+                // Get the bounds of integration
+                LaTeXParser.MathListFromLaTeX(@"\infty").Deconstruct(out MathList defaultUpperBound, out _);
+                LaTeXParser.MathListFromLaTeX(@"-\infty").Deconstruct(out MathList defaultLowerBound, out _);
+                var upperBound = MathS.FromString(
+                    ConvertToMathString(largeOperator.Superscript.Count == 0 ? defaultUpperBound : largeOperator.Superscript)
+                );
+                var lowerBound = MathS.FromString(
+                    ConvertToMathString(largeOperator.Subscript.Count == 0 ? defaultLowerBound : largeOperator.Subscript)
+                );
+
+                // Get the list of atoms that we need to integrate
+                // i+1 to skip the integral symbol, and idxOfWRT-i-2 to remove the dx
+                var intAtoms = atoms.Skip(i + 1).Take(idxOfWRT - i - 2).ToList();
+
+                // Calculate the integral of the expression
+                var varWRT = MathS.Var(foundWRT ? atoms[idxOfWRT].Nucleus : "x");
+                var antiderivative = MathS.FromString(ConvertToMathString(intAtoms)).Integrate(varWRT).Simplify();
+                output.Append((antiderivative.Substitute(varWRT, upperBound) - antiderivative.Substitute(varWRT, lowerBound)).Simplify().ToString());
+
+                // Make sure the atoms involved in the integration aren't parsed again
+                i = idxOfWRT;
+                continue;
+              } else {
+                // Indefinite integral
+
+                // Find the variable to integrate with respect to
+                bool foundWRT = false;
+                int idxOfWRT = i + 1;
+                while (!foundWRT && idxOfWRT + 1 < atoms.Count) {
+                  foundWRT = atoms[idxOfWRT] is Variable intWRTMarker && intWRTMarker.Nucleus == "d"
+                      && atoms[idxOfWRT + 1] is Variable;
+                  idxOfWRT++;
+                }
+
+                // Get the list of atoms that we need to integrate
+                // i+1 to skip the integral symbol, and idxOfWRT-i-2 to remove the dx
+                var intAtoms = atoms.Skip(i + 1).Take(idxOfWRT - i - 2).ToList();
+
+                // Calculate the integral of the expression
+                var varWRT = MathS.Var(foundWRT ? atoms[idxOfWRT].Nucleus : "x");
+                output.Append(MathS.FromString(ConvertToMathString(intAtoms)).Integrate(varWRT).Simplify().ToString());
+
+                // Make sure the atoms involved in the integration aren't parsed again
+                i = idxOfWRT;
+                continue;
+              }
+            } else {
+              output.Append(atom.Nucleus);
+            }
+
+            break;
+          case Ordinary ordinary: // to add
+            var nuc = ordinary.Nucleus;
+            if (nuc == "∞") {
+              output.Append(@"+oo");
+            } else if (nuc == "-∞") {
+              output.Append(@"-oo");
+            } else {
+              output.Append(nuc);
+            }
+            break;
+          default:
+            output.Append(atom.Nucleus);
+            break;
+        }
+        if (atom.Superscript.Count > 0) {
+          output.Append($"^({ConvertToMathString2(atom.Superscript)})");
+        }
+        if (atom.Subscript.Count > 0) {
+          output.Append($"_({ConvertToMathString2(atom.Subscript)})");
+        }
+      }
+      return output.ToString();
     }
 
     /// <summary>

@@ -9,7 +9,7 @@ namespace CSharpMath.Editor {
     D5 = '5', D6 = '6', D7 = '7', D8 = '8', D9 = '9', Decimal = '.',
 
     // Basic operators
-    Plus = '+', Minus = '-', Multiply = '*', Divide = '÷',
+    Plus = '+', Minus = '-', Multiply = '*', Divide = '÷',PlusMinus = '±',
     Ratio = ':', Percentage = '%', Comma = ',', Semicolon = ';', Factorial = '!',
     Infinity = '∞', Angle = '∠', Degree = '°', VerticalBar = '|',
     Logarithm = '㏒', NaturalLogarithm = '㏑', Prime = '\'', PartialDifferential = '∂',
