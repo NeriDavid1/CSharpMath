@@ -10,6 +10,7 @@ namespace CSharpMath.Editor.Visualizer {
     private List<MathKeyboardInput> inputList = new();
     private LatexMathKeyboard latexMathKeyboard = new();
     private Func<String> GetText = () => "";
+    private bool MathTextWithCert = false;
     public Form1() {
       InitializeComponent();
     }
@@ -58,17 +59,12 @@ namespace CSharpMath.Editor.Visualizer {
     private void Fire_Click(object sender, EventArgs e) {
       latexMathKeyboard.Clear();
       clearButtons();
-      if (checkBox1.Checked) {
-        latexMathKeyboard.KeyPress(inputList.ToArray());
-        //CreateGrafhTableByLeftRight();
-      } else {
+      SetGetText();
         foreach (MathKeyboardInput i in inputList) {
           latexMathKeyboard.KeyPress(i);
-          var theatom = latexMathKeyboard.navigation.ToString();
-          //CreateGrafhTableByBuilding();
+          var text = GetText();
         }
 
-      }
       LatexLable.Text = GetText();
     }
 
@@ -125,6 +121,7 @@ namespace CSharpMath.Editor.Visualizer {
     }
     private void DebugButton_Click(object sender, EventArgs e) {
       latexMathKeyboard.Clear();
+      SetGetText();
       latexMathKeyboard.KeyPress(inputList.ToArray());
       LatexLable.Text = GetText();
     }
@@ -159,23 +156,15 @@ namespace CSharpMath.Editor.Visualizer {
       inputList.Add(MathKeyboardInput.Right);
     }
 
-    private void checkBox1_CheckedChanged(object sender, EventArgs e) {
-      if (checkBox1.Checked) {
-        checkBox2.Checked = false;
-      }
-    }
-
     private void checkBox2_CheckedChanged(object sender, EventArgs e) {
-      if (checkBox2.Checked) {
-        checkBox1.Checked = false;
-      }
+
     }
 
     private void MouseCheckBox_CheckedChanged(object sender, EventArgs e) {
       if (this.MouseCheckBox.Checked) {
-        GetText = latexMathKeyboard._LatexWithCert;
+        MathTextWithCert = true;
       } else {
-        GetText = () => latexMathKeyboard.LaTeX;
+        MathTextWithCert = false;
       }
     }
 
@@ -193,6 +182,13 @@ namespace CSharpMath.Editor.Visualizer {
 
     private void GetKeyTest_Click(object sender, EventArgs e) {
       KeyText.Text = GetAsKeyTest();
+    }
+    private void SetGetText() {
+      if (MathTextWithCert) {
+        GetText = () => latexMathKeyboard._LatexWithCert();
+      } else {
+        GetText = () => latexMathKeyboard.LaTeX;
+      }
     }
   }
 }
