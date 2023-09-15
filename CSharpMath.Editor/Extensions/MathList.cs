@@ -126,6 +126,7 @@ namespace CSharpMath.Editor {
         default:
           list.GetCurrentList.RemoveAt(list.Index);
           list.Previous();
+          list.OnRightSide = true;
           break;
       }
       if (PlaceHolderRequierd(list)) {
