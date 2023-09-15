@@ -37,9 +37,9 @@ namespace CSharpMath.EvaluationTests {
 
           T(@"1/(1/1)", K.Slash, K.LeftRoundBracket, K.Slash, K.D1, K.RightRoundBracket),
           T(@"1/(2/1)", K.Slash, K.D2, K.Slash, K.D1),
-          T(@"1/2*1/1", K.D1, K.Slash, K.D2, K.Multiply, K.D1),
+          T(@"1/(2*1)", K.D1, K.Slash, K.D2, K.Multiply, K.D1),
           T(@"1/2*1/1", K.D1, K.Slash, K.D2, K.Right, K.D1, K.Slash, K.D1),
-          T(@"1/2*2/1", K.D1, K.Slash, K.D2, K.Multiply, K.D2, K.Slash, K.D1),
+          T(@"1/(2*2/1)", K.D1, K.Slash, K.D2, K.Multiply, K.D2, K.Slash, K.D1),
 
           T(@"(2/1)^(1/2)", K.SquareRoot, K.LeftRoundBracket, K.D2, K.Slash, K.D1, K.RightRoundBracket),
           T(@"1/(1*1)", K.D1, K.Slash, K.D1, K.LeftRoundBracket, K.D1, K.RightRoundBracket),
@@ -52,6 +52,7 @@ namespace CSharpMath.EvaluationTests {
           T(@"1-2/1", K.D1, K.Minus, K.D2, K.Slash, K.D1),
           T(@"1*2/1", K.D1, K.Multiply, K.D2, K.Slash, K.D1),
           T(@"1/2", K.D1, K.Slash, K.D2),
+          T(@"5*6=x", K.D5, K.Multiply, K.D6, K.Equals, K.X),
           T(@"1/2/1", K.D1, K.Ratio, K.D2, K.Slash, K.D1),
           T(@"1=2/1", K.D1, K.Equals, K.D2, K.Slash, K.D1),
           T(@"1!=2/1", K.D1, K.NotEquals, K.D2, K.Slash, K.D1),
