@@ -761,15 +761,19 @@ namespace CSharpMath.Editor {
     /// <param name="BackToFirstPos"></param>
     /// <returns></returns>
     public MathNavigation? SerachFor(Func<MathNavigation, bool> Condition,
-      out int CountMovement, bool ToLeft = true, bool BackToFirstPos = true) {
+      out int CountMovement, bool BackToFirstPos = true) {
 
       var MathNavigationCopy = navigation;
 
       var isFirst = () => navigation.FirstAtomInAllLists;
-      var isLast = () => navigation.IsTheOnlyList && navigation.IsLastIndex;
 
-      Action Movement = ToLeft ? () => KeyPress(MathKeyboardInput.Left) : () => KeyPress(MathKeyboardInput.Right);
-      Func<bool> OnTheEdge = ToLeft ? isFirst : isLast;
+      Action Movement = () => KeyPress(MathKeyboardInput.Left);
+      // to right
+        // move to the end
+        navigation.OnRightSide = true;
+        navigation.MoveToLastList();
+        navigation.MoveToLastAtom();
+      Func<bool> OnTheEdge = isFirst;
 
       Movement();
       CountMovement = 1;
@@ -810,7 +814,7 @@ namespace CSharpMath.Editor {
       if (MathList.Count == 0) return;
 
       if (!refernceEqual(navigation)) {
-        SerachFor(refernceEqual, out _, false, false);
+        SerachFor(refernceEqual, out _, false);
       }
 
       if (setIndexBeforeAtom)
