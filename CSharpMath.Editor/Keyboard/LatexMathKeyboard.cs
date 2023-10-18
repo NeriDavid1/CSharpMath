@@ -775,8 +775,7 @@ namespace CSharpMath.Editor {
         navigation.MoveToLastAtom();
       Func<bool> OnTheEdge = isFirst;
 
-      Movement();
-      CountMovement = 1;
+      CountMovement = 0;
 
       while (!OnTheEdge()) {
         if (Condition(navigation)) {

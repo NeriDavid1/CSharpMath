@@ -42,6 +42,7 @@ namespace CSharpMath.Editor.Tests {
   T(0, 2,K.D1, K.Power,K.D2,K.D3),
   T(3,3,K.NthRoot,K.D5,K.D6,K.D7),
   T(0,3,K.NthRoot,K.D5,K.D6,K.D7),
+  T(0,2,K.D1,K.D2,K.D3),
 
 ]
     public void AtomInput(int moveLeft, int atomindex, params K[] inputs) => Test(moveLeft, atomindex, inputs);
