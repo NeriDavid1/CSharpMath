@@ -225,8 +225,8 @@ namespace CSharpMath.Editor {
             }
             break;
           case Radical radical:
-            radical.Degree.Deployment();
-            radical.Radicand.Deployment();
+            AddToList(radical.Degree);
+            AddToList(radical.Radicand);
             break;
           case Inner { LeftBoundary: { Nucleus: null }, InnerList: var list }:
             AddToList(list);
@@ -250,7 +250,6 @@ namespace CSharpMath.Editor {
             AddToList(under.InnerList);
             break;
           case Accent accent:
-            //MathAtomToLaTeX(accent, builder, out _);
             AddToList(accent.InnerList);
             break;
           case Colored colored:
