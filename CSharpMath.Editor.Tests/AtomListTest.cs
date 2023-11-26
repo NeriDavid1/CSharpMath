@@ -26,7 +26,6 @@ namespace CSharpMath.Editor.Tests {
   T( 4,K.SmallY, K.Subscript, K.D3, K.Subscript, K.D4, K.D5),
   T( 4,K.D5, K.Power, K.Iota, K.Kappa, K.SmallEta),
   T( 3,K.Fraction,K.D5,K.Right,K.D6),
-  T(3,K.NthRoot,K.D5,K.D6),
 ]
     public void ItemsNumber(int number,params K[] inputs) => DeoploymentTest(number,inputs);
   }

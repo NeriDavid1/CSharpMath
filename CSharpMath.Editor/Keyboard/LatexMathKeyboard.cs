@@ -176,6 +176,7 @@ namespace CSharpMath.Editor {
             // in case of two lists we will move to the previous list for exmple //frac{square}{|2323} >> //frac{square|}{2323}
             navigation.PreviousList();
             navigation.MoveToLastAtom();
+            navigation.OnRightSide = true;
             return;
           }
           if (navigation.OnRightSide) {
@@ -240,11 +241,14 @@ namespace CSharpMath.Editor {
                 GoToScript();
                 return;
               }
-
               // if is on continer it could move to scripts for example fraction{566}{44|}{88} 88 is the script
               navigation.OnRightSide = !navigation.OnContainer;
 
               navigation.MoveDown();
+              return;
+            }
+            // go to script if not on the right side and there is a script
+            if (GoToScript()) {
               return;
             }
             // in case of two lists we will move to the next list for exmple //frac{square|}{2323} >> //frac{square}{|2323}
