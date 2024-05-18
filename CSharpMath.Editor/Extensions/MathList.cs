@@ -138,7 +138,12 @@ namespace CSharpMath.Editor {
           switch (list.GetListPerent()) {
             case Fraction:
             case Number:
-            case Radical:
+            case Radical: // not all the cases are handled
+            case Inner:
+            case Accent:
+            case Colored:
+            case Variable:
+            case Placeholder:
               return true;
             default:
               return false;
