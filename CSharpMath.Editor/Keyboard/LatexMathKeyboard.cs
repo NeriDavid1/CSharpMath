@@ -141,10 +141,10 @@ namespace CSharpMath.Editor {
       void MoveCursor(Diraction diraction) {
         switch (diraction) {
           case Diraction.Down:
-            // todo
+            MoveCursorDown();
             break;
           case Diraction.Up:
-            // todo
+            MoveCursorUp();
             break;
           case Diraction.Left:
             MoveCursorLeftNew();
@@ -291,6 +291,76 @@ namespace CSharpMath.Editor {
             }
           }
         }
+        void MoveCursorUp() {
+          if (navigation.GetListPerent() is Atoms.Fraction Perent) {
+
+            // Translate this position to the numerator
+            int newPosition = CalculateNewPosition(Perent.Numerator.Count, Perent.Denominator.Count, navigation.Index);
+
+            MoveToNumerator();
+            navigation.Index = newPosition;
+
+          }
+          int CalculateNewPosition(int numeratorCount, int denominatorCount, int index) {
+            int numeratorPlaces = numeratorCount + 1;
+            int denominatorPlaces = denominatorCount + 1;
+
+            int difference = numeratorPlaces - denominatorPlaces;
+
+            int RelativePosition = GetRelative();
+
+            int newPosition = index + RelativePosition;
+            // Clamp the position within the bounds of the numerator
+            newPosition = Math.Max(-1, newPosition); // Assuming index starts from 0
+            newPosition = Math.Min(numeratorCount + 1, newPosition);
+
+            return newPosition;
+
+            int GetRelative() {
+              return difference > 0 ? (int)Math.Ceiling((double)((difference + 1) / 2)) :
+                difference < 0 ? (int)Math.Ceiling((double)((difference - 1) / 2))
+                : 0;
+            }
+          }
+          void MoveToNumerator() {
+            navigation.PreviousList();
+          }
+        }
+        void MoveCursorDown() {
+          if (navigation.GetListPerent() is Atoms.Fraction Perent) {
+
+            // Translate this position to the numerator
+            int newPosition = CalculateNewPosition(Perent.Denominator.Count, Perent.Numerator.Count, navigation.Index);
+
+            MoveToDenominator();
+            navigation.Index = newPosition;
+
+          }
+          int CalculateNewPosition(int denominatorCount, int numeratorCount, int index) {
+            int numeratorPlaces = denominatorCount + 1;
+            int denominatorPlaces = numeratorCount + 1;
+
+            int difference = numeratorPlaces - denominatorPlaces;
+
+            int RelativePosition = GetRelative();
+
+            int newPosition = index + RelativePosition;
+            // Clamp the position within the bounds of the numerator
+            newPosition = Math.Max(-1, newPosition); // Assuming index starts from 0
+            newPosition = Math.Min(denominatorCount - 1, newPosition);
+
+            return newPosition;
+
+            int GetRelative() {
+              return difference > 0 ? (int)Math.Ceiling((double)((difference + 1) / 2)) :
+                difference < 0 ? (int)Math.Ceiling((double)((difference - 1) / 2))
+                : 0;
+            }
+          }
+          void MoveToDenominator() {
+            navigation.NextList();
+          }
+        }
       }
       void DeleteBackwardsNew() {
         if (navigation.FirstAtomInAllLists) {
@@ -343,6 +413,7 @@ namespace CSharpMath.Editor {
             MoveCursor(Diraction.Up);
             break;
           case MathKeyboardInput.Down:
+            MoveCursor(Diraction.Down);
             break;
           case MathKeyboardInput.Left:
             MoveCursor(Diraction.Left);
@@ -403,7 +474,7 @@ namespace CSharpMath.Editor {
             InsertSymbolNameNew(@"\Caret");
             break;
           case MathKeyboardInput.PlusMinus:
-          InsertSymbolNameNew(@"\pm");
+            InsertSymbolNameNew(@"\pm");
             break;
           case MathKeyboardInput.Logarithm:
             InsertSymbolNameNew(@"\log");
@@ -773,10 +844,10 @@ namespace CSharpMath.Editor {
 
       Action Movement = () => KeyPress(MathKeyboardInput.Left);
       // to right
-        // move to the end
-        navigation.OnRightSide = true;
-        navigation.MoveToLastList();
-        navigation.MoveToLastAtom();
+      // move to the end
+      navigation.OnRightSide = true;
+      navigation.MoveToLastList();
+      navigation.MoveToLastAtom();
       Func<bool> OnTheEdge = isFirst;
 
       CountMovement = 0;

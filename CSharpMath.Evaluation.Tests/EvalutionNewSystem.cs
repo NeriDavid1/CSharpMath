@@ -52,7 +52,7 @@ namespace CSharpMath.EvaluationTests {
           T(@"1-2/1", K.D1, K.Minus, K.D2, K.Slash, K.D1),
           T(@"1*2/1", K.D1, K.Multiply, K.D2, K.Slash, K.D1),
           T(@"1/2", K.D1, K.Slash, K.D2),
-          T(@"5*6=x", K.D5, K.Multiply, K.D6, K.Equals, K.X),
+          T(@"5*6=x", K.D5, K.Multiply, K.D6, K.Equals, K.SmallX),
           T(@"1/2/1", K.D1, K.Ratio, K.D2, K.Slash, K.D1),
           T(@"1=2/1", K.D1, K.Equals, K.D2, K.Slash, K.D1),
           T(@"1!=2/1", K.D1, K.NotEquals, K.D2, K.Slash, K.D1),
@@ -62,6 +62,7 @@ namespace CSharpMath.EvaluationTests {
           // add some test to plusminus
           T(@"1+2/1or1-2/1", K.D1, K.PlusMinus, K.D2, K.Slash, K.D1),
           T(@"56=X+5or56=X-5", K.D5, K.D6, K.Equals, K.X, K.PlusMinus, K.D5),
+        T(@"x^4-2^2+3*x", K.SmallX, K.Power, K.D4, K.Right, K.Minus, K.D2, K.Power, K.D2, K.Right, K.Plus, K.D3, K.SmallX),
         ]
     public void Genral(string latex, params K[] inputs) => Test(latex, inputs);
   }

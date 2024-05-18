@@ -409,9 +409,27 @@ T(@"4^6", K.Power, K.D6, K.Left, K.Left, K.D7, K.D8, K.Backspace, K.Backspace, K
     [
 Theory,
 T(@"5", K.D5, K.Slash, K.D7, K.Backspace, K.Backspace),
-T(@"3", K.D3, K.Slash, K.D2, K.D0 ,K.Backspace, K.Backspace,K.Backspace),
+T(@"3", K.D3, K.Slash, K.D2, K.D0, K.Backspace, K.Backspace, K.Backspace),
 ]
     public void BackSpaceDenominator(string latex, params K[] inputs) => Test(latex, inputs);
+    [
+  Theory,
+  T(@"\frac{59}{7}", K.D5, K.Slash, K.D7, K.Up, K.D9),
+  T(@"\frac{349}{0}", K.D3, K.D4, K.Slash, K.D0, K.Up, K.D9),
+  T(@"\frac{394}{0}", K.D3, K.D4, K.Slash, K.D0, K.Left, K.Up, K.D9),
+  T(@"\frac{3459}{123}", K.D3, K.D4, K.D5, K.Slash, K.D1, K.D2, K.D3, K.Up, K.D9),
+  T(@"\frac{3495}{123}", K.D3, K.D4, K.D5, K.Slash, K.D1, K.D2, K.D3, K.Up, K.Left, K.D9),
+  T(@"\frac{3945}{123}", K.D3, K.D4, K.D5, K.Slash, K.D1, K.D2, K.D3, K.Left, K.Left, K.Up, K.D9),
+  T(@"\frac{9345}{123}", K.D3, K.D4, K.D5, K.Slash, K.D1, K.D2, K.D3, K.Left, K.Left, K.Left, K.Up, K.D9),
+  T(@"\frac{1234596}{789}",K.D1,K.D2,K.D3,K.D4,K.D5,K.D6,K.Slash,K.D7,K.D8,K.D9,K.Up,K.D9),
+  T(@"\frac{1234956}{789}",K.D1,K.D2,K.D3,K.D4,K.D5,K.D6,K.Slash,K.D7,K.D8,K.D9,K.Left,K.Up,K.D9),
+  T(@"\frac{1239456}{789}",K.D1,K.D2,K.D3,K.D4,K.D5,K.D6,K.Slash,K.D7,K.D8,K.D9,K.Left,K.Left,K.Up,K.D9),
+  
+
+
+  ]
+    public void ArrowUp(string latex, params K[] inputs) => Test(latex, inputs);
+
     public void SplitByatom() {
       var keyboard = new LatexMathKeyboard();
       keyboard.KeyPress(K.D1, K.D2, K.D3, K.D4, K.Equals, K.D5, K.D6, K.D7, K.Equals, K.Power, K.D5, K.Right, K.Equals, K.D9);
