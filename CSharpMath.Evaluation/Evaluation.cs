@@ -192,7 +192,11 @@ namespace CSharpMath {
             }
             break;
           default:
-            output.Append(atom.Nucleus);
+            // for numbers etc.
+            string nucl = atom.Nucleus;
+            // Replace the minus to the right minus sign
+            nucl = Regex.Replace(nucl, @"−", "-");
+            output.Append(nucl);
             break;
         }
         if (atom.Superscript.Count > 0) {
