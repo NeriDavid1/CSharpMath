@@ -650,7 +650,10 @@ namespace CSharpMath.Editor {
           case MathKeyboardInput.Multiply:
             InsertSymbolNameNew(@"\times");
             break;
-          case MathKeyboardInput.Divide:
+          case MathKeyboardInput.Cdot:
+            InsertSymbolNameNew(@"\cdot");
+            break;
+            case MathKeyboardInput.Divide:
             InsertSymbolNameNew(@"\div");
             break;
           case MathKeyboardInput.Infinity:

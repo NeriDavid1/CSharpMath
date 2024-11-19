@@ -11,7 +11,7 @@ namespace CSharpMath.Editor {
     // Basic operators
     Plus = '+', Minus = '-', Multiply = '*', Divide = '÷',PlusMinus = '±',
     Ratio = ':', Percentage = '%', Comma = ',', Semicolon = ';', Factorial = '!',
-    Infinity = '∞', Angle = '∠', Degree = '°', VerticalBar = '|',
+    Infinity = '∞', Angle = '∠', Degree = '°', VerticalBar = '|', Cdot = '·',
     Logarithm = '㏒', NaturalLogarithm = '㏑', Prime = '\'', PartialDifferential = '∂',
     LeftArrow = '←', UpArrow = '↑', RightArrow = '→', DownArrow = '↓', Space = ' ',
 
