@@ -312,6 +312,8 @@ namespace CSharpMath.Editor {
       list.GetCurrentList.RemoveAt(list.Index);
       list.GetCurrentList.Insert(list.Index, PlaceHolder);
     }
+
+
   }
 }
 
