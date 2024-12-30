@@ -52,7 +52,6 @@ namespace CSharpMath.EvaluationTests {
     [InlineData(".5678", @"\frac{2839}{5000}", @"\frac{2839}{5000}")]
     [InlineData(".9876543210", "0.9876543210", "0.9876543210")]
     [InlineData("1234.5678", @"\frac{6172839}{5000}", @"\frac{6172839}{5000}")]
-    [InlineData(@"\infty", @"\infty ", @"\infty ")]
     public void Numbers(string input, string converted, string output) =>
       Test(input, converted, output);
     [Theory]

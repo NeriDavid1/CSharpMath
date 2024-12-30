@@ -14,7 +14,6 @@ namespace CSharpMath {
   using System.Text.RegularExpressions;
   using AngouriMath.Core.Exceptions;
   using System.Text;
-
   public static partial class Evaluation {
     enum Precedence {
       DefaultContext,
@@ -32,7 +31,6 @@ namespace CSharpMath {
       // Highest
     }
     /// מסקנות שכרגע הוא לא רשם את הטסטרים ושיש בעיה עם הסינטקס שלו צריך לשכתב את הפונקציה
-
     public static Entity ParseExpression(string latexIn) {
       string StringMath = ConvertToMathString(latexIn)!;
       return latexIn.ToEntity();
@@ -49,166 +47,9 @@ namespace CSharpMath {
       }
       return null;
     }
-
     public static string ConvertToMathString(IList<MathAtom> atoms) {
-      StringBuilder output = new StringBuilder();
-
-      for (int i = 0; i < atoms.Count; i++) {
-        var atom = atoms[i];
-        switch (atom) {
-          case Comment { Nucleus: var comment }:
-            break;
-          case Fraction fraction:
-            output.Append($"({ConvertToMathString(fraction.Numerator)})/({ConvertToMathString(fraction.Denominator)})");
-            break;
-          case Radical radical:
-            string degree = ConvertToMathString(radical.Degree);
-            if (degree == "") degree = "2";
-            string radicand = ConvertToMathString(radical.Radicand);
-            output.Append($"( {radicand} )^( 1/{degree} )");
-            break;
-          case Inner { LeftBoundary: { Nucleus: null }, InnerList: var list }:
-            output.Append($"({ConvertToMathString(list)})");
-            break;
-          case Inner { LeftBoundary: { Nucleus: "〈" }, InnerList: var list }:
-            output.Append($"({ConvertToMathString(list)})");
-            break;
-          case Inner { LeftBoundary: { Nucleus: "|" }, InnerList: var list }:
-            output.Append($"abs({ConvertToMathString(list)})");
-            break;
-          case Inner { LeftBoundary: var left, InnerList: var list }:
-            output.Append($"({ConvertToMathString(list)})");
-            break;
-          case Accent accent:
-          case Colored colored:
-          case ColorBox colorBox:
-          case RaiseBox r:
-            break;
-          case Variable variable:
-            output.Append(atom.Nucleus);
-            if (i + 1 < atoms.Count && atoms[i + 1] is Variable)
-              output.Append("*");
-            break;
-          case BinaryOperator binaryOperator:
-            if (binaryOperator.Nucleus == "·") {
-              output.Append("*");
-            } else if (binaryOperator.Nucleus == "−") {
-              output.Append("-");
-            } else if (binaryOperator.Nucleus == @"×") {
-              output.Append("*");
-            } else {
-              output.Append(binaryOperator.Nucleus);
-            }
-            break;
-          case LargeOperator largeOperator:
-            if (largeOperator.Nucleus == "∫") {
-              // Figure out which kind of intergral we're dealing with
-              if (largeOperator.Subscript.Count > 0 || largeOperator.Superscript.Count > 0) {
-                // Definite integral
-
-                // Find the variable to integrate with respect to
-                bool foundWRT = false;
-                int idxOfWRT = i + 1;
-                while (!foundWRT && idxOfWRT + 1 < atoms.Count) {
-                  foundWRT = atoms[idxOfWRT] is Variable intWRTMarker && intWRTMarker.Nucleus == "d"
-                      && atoms[idxOfWRT + 1] is Variable;
-                  idxOfWRT++;
-                }
-
-                // Get the bounds of integration
-                LaTeXParser.MathListFromLaTeX(@"\infty").Deconstruct(out MathList defaultUpperBound, out _);
-                LaTeXParser.MathListFromLaTeX(@"-\infty").Deconstruct(out MathList defaultLowerBound, out _);
-                var upperBound = MathS.FromString(
-                    ConvertToMathString(largeOperator.Superscript.Count == 0 ? defaultUpperBound : largeOperator.Superscript)
-                );
-                var lowerBound = MathS.FromString(
-                    ConvertToMathString(largeOperator.Subscript.Count == 0 ? defaultLowerBound : largeOperator.Subscript)
-                );
-
-                // Get the list of atoms that we need to integrate
-                // i+1 to skip the integral symbol, and idxOfWRT-i-2 to remove the dx
-                var intAtoms = atoms.Skip(i + 1).Take(idxOfWRT - i - 2).ToList();
-
-                // Calculate the integral of the expression
-                var varWRT = MathS.Var(foundWRT ? atoms[idxOfWRT].Nucleus : "x");
-                var antiderivative = MathS.FromString(ConvertToMathString(intAtoms)).Integrate(varWRT).Simplify();
-                output.Append((antiderivative.Substitute(varWRT, upperBound) - antiderivative.Substitute(varWRT, lowerBound)).Simplify().ToString());
-
-                // Make sure the atoms involved in the integration aren't parsed again
-                i = idxOfWRT;
-                continue;
-              } else {
-                // Indefinite integral
-
-                // Find the variable to integrate with respect to
-                bool foundWRT = false;
-                int idxOfWRT = i + 1;
-                while (!foundWRT && idxOfWRT + 1 < atoms.Count) {
-                  foundWRT = atoms[idxOfWRT] is Variable intWRTMarker && intWRTMarker.Nucleus == "d"
-                      && atoms[idxOfWRT + 1] is Variable;
-                  idxOfWRT++;
-                }
-
-                // Get the list of atoms that we need to integrate
-                // i+1 to skip the integral symbol, and idxOfWRT-i-2 to remove the dx
-                var intAtoms = atoms.Skip(i + 1).Take(idxOfWRT - i - 2).ToList();
-
-                // Calculate the integral of the expression
-                var varWRT = MathS.Var(foundWRT ? atoms[idxOfWRT].Nucleus : "x");
-                output.Append(MathS.FromString(ConvertToMathString(intAtoms)).Integrate(varWRT).Simplify().ToString());
-
-                // Make sure the atoms involved in the integration aren't parsed again
-                i = idxOfWRT;
-                continue;
-              }
-            } else {
-              output.Append(atom.Nucleus);
-            }
-
-            break;
-          case Ordinary ordinary: // to add
-            var nuc = ordinary.Nucleus;
-            if (nuc == "∞") {
-              output.Append(@"+oo");
-            } else if (nuc == "-∞") {
-              output.Append(@"-oo");
-            } else {
-              output.Append(nuc);
-            }
-            break;
-          case Relation relation:
-            if(relation.Nucleus == "≤") {
-              output.Append("<=");
-            } else if(relation.Nucleus == "≥") {
-              output.Append(">=");
-               } else if(relation.Nucleus == "≠") {
-                 output.Append("!=");
-            }
-              else if (relation.Nucleus == "∶") {
-                output.Append("/");
-              }
-             else {
-              output.Append(relation.Nucleus);
-            }
-            break;
-          default:
-            // for numbers etc.
-            string nucl = atom.Nucleus;
-            // Replace the minus to the right minus sign
-            nucl = Regex.Replace(nucl, @"−", "-");
-            output.Append(nucl);
-            break;
-        }
-        if (atom.Superscript.Count > 0) {
-          output.Append($"^({ConvertToMathString(atom.Superscript)})");
-        }
-        if (atom.Subscript.Count > 0) {
-          output.Append($"({ConvertToMathString(atom.Subscript)})");
-        }
-      }
-      return output.ToString();
+      return MathListConverator.ConvertToMathString(atoms);
     }
-
     public static string HandleSpecialCases(string mathString) {
       return PlusMinus(mathString);
       static string PlusMinus(string inputString) {
@@ -228,6 +69,12 @@ namespace CSharpMath {
         return output.ToString();
       }
     }
+
+    /// <summary>
+    /// Finds Numbers that comes before a fraction and converts them to one fraction
+    /// </summary>
+    /// <param name="mathList"></param>
+    /// <returns></returns>
 
     /// <summary>
     /// Parses a LaTeX command and returns a list of AngouriMath-ready expressions
@@ -354,6 +201,5 @@ namespace CSharpMath {
       }
       return output;
     }
-
   }
 }
